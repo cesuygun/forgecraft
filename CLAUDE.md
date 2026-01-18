@@ -216,7 +216,7 @@ useEffect(() => {
 - [x] Path aliases aligned
 
 ### Remaining
-- [ ] Implement V1 workflow (see `docs/plans/2025-01-18-v1-workflow-design.md`)
+- [x] ~~Implement V1 workflow~~ (see `docs/plans/2025-01-18-v1-workflow-design.md`) **COMPLETE**
 
 ### V1 Implementation Phases
 
@@ -224,7 +224,7 @@ useEffect(() => {
 2. **Phase 2: Queue & Generation** ✅ - Queue processor, IPC progress, error recovery (179 tests)
 3. **Phase 3: Basic UI** ✅ - Workflow views, Theme/Template CRUD UI, queue status (179 tests)
 4. **Phase 4: Template System** ✅ - "Generate All" with combination counting (195 tests)
-5. **Phase 5: History & Polish** - Filters, queue management, settings
+5. **Phase 5: History & Polish** ✅ - History browser, queue management, image preview, settings (195 tests)
 
 ### Deferred to V2
 - [ ] LoRA training pipeline

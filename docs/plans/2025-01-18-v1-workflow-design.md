@@ -498,11 +498,11 @@ The right panel is always visible regardless of sidebar selection:
 - [x] Prompt composition (theme + template interpolation)
 - [x] "Generate All" with combination counting
 
-### Phase 5: History & Polish
-- [ ] History browser with filters (by theme, template, date)
-- [ ] Queue management UI (cancel, retry)
-- [ ] Image preview in canvas
-- [ ] Settings panel (model selection, default steps/cfg)
+### Phase 5: History & Polish ✅
+- [x] History browser with filters (by theme, template, date)
+- [x] Queue management UI (cancel, retry)
+- [x] Image preview in canvas
+- [x] Settings panel (model selection, default steps/cfg)
 
 ### Deferred (V2)
 - [ ] LoRA training pipeline
