@@ -11,7 +11,11 @@ import type {
 	GenerationFailedMessage,
 } from "@shared/types";
 
-export const GenerationPanel = () => {
+interface GenerationPanelProps {
+	onNavigateToQueue?: () => void;
+}
+
+export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => {
 	const [selectedTheme, setSelectedTheme] = useState<string>("");
 	const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 	const [rawPrompt, setRawPrompt] = useState("");
@@ -38,6 +42,8 @@ export const GenerationPanel = () => {
 	});
 	// Track the ID of the current generation request for progress tracking
 	const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
+	// Track progress of the currently generating queue item (for mini status display)
+	const [queueProgress, setQueueProgress] = useState<number>(0);
 
 	// Load themes on mount
 	useEffect(() => {
@@ -116,14 +122,21 @@ export const GenerationPanel = () => {
 		const unsubStatus = window.forge.queue.onStatusChange((status) => {
 			setQueueStatus(status);
 			setIsGenerating(status.generating !== null);
+			// Reset queue progress when a new generation starts
+			if (status.generating !== null) {
+				setQueueProgress(0);
+			}
 		});
 
-		// Subscribe to generation progress
+		// Subscribe to generation progress - track for both our request and overall queue
 		const unsubProgress = window.forge.queue.onProgress(
 			(progressMsg: GenerationProgressMessage) => {
+				// Track progress for our own request
 				if (progressMsg.requestId === currentRequestId) {
 					setProgress(progressMsg.percent);
 				}
+				// Track progress for the mini queue status display
+				setQueueProgress(progressMsg.percent);
 			}
 		);
 
@@ -135,6 +148,8 @@ export const GenerationPanel = () => {
 					setCurrentRequestId(null);
 					setProgress(0);
 				}
+				// Reset queue progress on completion
+				setQueueProgress(0);
 			}
 		);
 
@@ -146,6 +161,8 @@ export const GenerationPanel = () => {
 					setCurrentRequestId(null);
 					setProgress(0);
 				}
+				// Reset queue progress on failure
+				setQueueProgress(0);
 			}
 		);
 
@@ -400,15 +417,65 @@ export const GenerationPanel = () => {
 			</div>
 
 			<div className="panel-footer">
-				<div className="queue-status">
-					<span className="queue-label">Queue</span>
-					{queueStatus.pending > 0 ? (
-						<span className="queue-count">{queueStatus.pending} pending</span>
-					) : queueStatus.generating !== null ? (
-						<span className="queue-count">Generating...</span>
-					) : (
-						<span className="queue-empty">No items in queue</span>
+				<div
+					className={`queue-status-mini ${onNavigateToQueue ? "clickable" : ""}`}
+					onClick={onNavigateToQueue}
+					role={onNavigateToQueue ? "button" : undefined}
+					tabIndex={onNavigateToQueue ? 0 : undefined}
+					onKeyDown={
+						onNavigateToQueue
+							? (e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault();
+										onNavigateToQueue();
+									}
+								}
+							: undefined
+					}
+				>
+					<div className="queue-status-header">
+						<span className="queue-label">Queue</span>
+						{onNavigateToQueue && <span className="queue-nav-arrow">&rarr;</span>}
+					</div>
+
+					{queueStatus.generating !== null && (
+						<div className="queue-progress-mini">
+							<div className="progress-bar">
+								<div
+									className="progress-fill"
+									style={{ width: `${queueProgress}%` }}
+								/>
+							</div>
+							<span className="progress-percent">{queueProgress}%</span>
+						</div>
 					)}
+
+					<div className="queue-stats">
+						{queueStatus.pending > 0 && (
+							<span className="queue-stat pending">
+								{queueStatus.pending} pending
+							</span>
+						)}
+						{queueStatus.generating !== null && (
+							<span className="queue-stat generating">1 generating</span>
+						)}
+						{queueStatus.completed > 0 && (
+							<span className="queue-stat completed">
+								{queueStatus.completed} completed
+							</span>
+						)}
+						{queueStatus.failed > 0 && (
+							<span className="queue-stat failed">
+								{queueStatus.failed} failed
+							</span>
+						)}
+						{queueStatus.pending === 0 &&
+							queueStatus.generating === null &&
+							queueStatus.completed === 0 &&
+							queueStatus.failed === 0 && (
+								<span className="queue-empty">No items in queue</span>
+							)}
+					</div>
 				</div>
 			</div>
 		</aside>

@@ -507,6 +507,88 @@ select {
 	color: var(--text-muted);
 }
 
+/* Mini Queue Status Display */
+.queue-status-mini {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 8px;
+	border-radius: var(--radius-md);
+	transition: background-color 0.15s ease;
+}
+
+.queue-status-mini.clickable {
+	cursor: pointer;
+}
+
+.queue-status-mini.clickable:hover {
+	background: var(--bg-hover);
+}
+
+.queue-status-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.queue-nav-arrow {
+	font-size: 14px;
+	color: var(--text-muted);
+	transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.queue-status-mini.clickable:hover .queue-nav-arrow {
+	transform: translateX(2px);
+	color: var(--accent-primary);
+}
+
+.queue-progress-mini {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.queue-progress-mini .progress-bar {
+	flex: 1;
+	height: 8px;
+}
+
+.queue-progress-mini .progress-percent {
+	font-size: 12px;
+	color: var(--text-secondary);
+	min-width: 36px;
+	text-align: right;
+}
+
+.queue-stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	font-size: 12px;
+}
+
+.queue-stat {
+	padding: 2px 6px;
+	border-radius: var(--radius-sm);
+	background: var(--bg-secondary);
+}
+
+.queue-stat.pending {
+	color: var(--warning);
+}
+
+.queue-stat.generating {
+	color: var(--accent-primary);
+}
+
+.queue-stat.completed {
+	color: var(--success);
+}
+
+.queue-stat.failed {
+	color: var(--error);
+}
+
 /* Field note */
 .field-note {
 	font-size: 12px;
