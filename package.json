@@ -2,7 +2,7 @@
   "name": "forgecraft",
   "version": "0.1.0",
   "description": "Offline game asset forge - consistent sprites, UI elements, and theme-based generation",
-  "main": "dist/main/index.js",
+  "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
