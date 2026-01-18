@@ -214,6 +214,12 @@ const forgeApi = {
     set: (settings: AppSettings): Promise<AppSettings> =>
       ipcRenderer.invoke("settings:set", settings),
   },
+
+  // Shell utilities
+  shell: {
+    showItemInFolder: (path: string): Promise<void> =>
+      ipcRenderer.invoke("shell:showItemInFolder", path),
+  },
 };
 
 // Expose the API to the renderer process

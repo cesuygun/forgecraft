@@ -1738,6 +1738,16 @@ button.danger:hover:not(:disabled) {
 	color: var(--text-secondary);
 }
 
+.preview-actions {
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--border);
+}
+
+.preview-actions button {
+	width: 100%;
+}
+
 /* Make history cards clickable for preview */
 .history-card {
 	cursor: pointer;

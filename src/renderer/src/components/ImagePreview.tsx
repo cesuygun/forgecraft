@@ -70,6 +70,10 @@ export const ImagePreview = ({ record, themes, templates, onClose }: Props) => {
 	const themeName = getThemeName(record.themeId);
 	const templateName = getTemplateName(record.templateId);
 
+	const handleShowInFolder = () => {
+		window.forge.shell.showItemInFolder(record.outputPath);
+	};
+
 	return (
 		<div
 			className="modal-overlay image-preview-overlay"
@@ -217,6 +221,16 @@ export const ImagePreview = ({ record, themes, templates, onClose }: Props) => {
 							<p className="preview-date" data-testid="preview-date">
 								{formatDate(record.createdAt)}
 							</p>
+						</div>
+
+						<div className="preview-actions">
+							<button
+								className="primary"
+								onClick={handleShowInFolder}
+								data-testid="preview-show-in-folder"
+							>
+								Show in Finder
+							</button>
 						</div>
 					</div>
 				</div>

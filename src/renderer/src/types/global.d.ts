@@ -109,6 +109,9 @@ export interface ForgeApi {
     get: () => Promise<AppSettings>;
     set: (settings: AppSettings) => Promise<AppSettings>;
   };
+  shell: {
+    showItemInFolder: (path: string) => Promise<void>;
+  };
 }
 
 declare global {
