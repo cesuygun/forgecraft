@@ -202,9 +202,9 @@ export const generateImage = async (
 
 		let errorOutput = "";
 
-		process.stderr?.on("data", (data: Buffer) => {
+		// sd-cpp outputs progress to stdout, not stderr
+		const handleOutput = (data: Buffer) => {
 			const text = data.toString();
-			errorOutput += text;
 
 			// Parse progress: "| 1/3 -" or "step 12/25"
 			const progressMatch = text.match(/\|\s*(\d+)\/(\d+)\s*-/) || text.match(/step\s+(\d+)\/(\d+)/i);
@@ -218,11 +218,18 @@ export const generateImage = async (
 				});
 			}
 
-			// Capture seed from output
-			const seedMatch = text.match(/seed:\s*(\d+)/i);
+			// Capture seed from output: "seed 42" or "seed: 42"
+			const seedMatch = text.match(/seed[:\s]+(\d+)/i);
 			if (seedMatch) {
 				capturedSeed = parseInt(seedMatch[1], 10);
 			}
+		};
+
+		process.stdout?.on("data", handleOutput);
+
+		process.stderr?.on("data", (data: Buffer) => {
+			errorOutput += data.toString();
+			handleOutput(data); // Also check stderr just in case
 		});
 
 		process.on("close", (code) => {
