@@ -1162,3 +1162,39 @@ button.danger:hover:not(:disabled) {
 	border-radius: var(--radius-sm);
 	word-break: break-word;
 }
+
+/* Variable field with All checkbox */
+.variable-field .variable-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.variable-field .variable-header label:first-child {
+	font-size: 12px;
+	color: var(--text-secondary);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.variable-field .all-checkbox {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	color: var(--text-secondary);
+	cursor: pointer;
+	text-transform: none;
+}
+
+.variable-field .all-checkbox input[type="checkbox"] {
+	width: 14px;
+	height: 14px;
+	cursor: pointer;
+	accent-color: var(--accent-primary);
+}
+
+.variable-field select:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}

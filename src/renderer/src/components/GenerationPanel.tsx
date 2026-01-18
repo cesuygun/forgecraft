@@ -1,7 +1,7 @@
 // ABOUTME: Generation panel component for creating images
 // ABOUTME: Handles theme/template selection and image generation via queue
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type {
 	Theme,
 	Template,
@@ -10,6 +10,11 @@ import type {
 	GenerationCompleteMessage,
 	GenerationFailedMessage,
 } from "@shared/types";
+import {
+	computeCombinations,
+	countCombinations,
+	type VariableAxis,
+} from "@shared/generate-all";
 
 interface GenerationPanelProps {
 	onNavigateToQueue?: () => void;
@@ -32,6 +37,10 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 	const [variableSelections, setVariableSelections] = useState<
 		Record<string, string>
 	>({});
+	// Track which variables have "All" selected for Generate All feature
+	const [allSelections, setAllSelections] = useState<Record<string, boolean>>(
+		{}
+	);
 
 	// Queue status from events
 	const [queueStatus, setQueueStatus] = useState<QueueStatusMessage>({
@@ -87,20 +96,26 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 			const template = templates.find((t) => t.id === selectedTemplate);
 			setCurrentTemplate(template || null);
 			// Initialize variable selections with first option for each variable
+			// Initialize all selections to false (specific value selected, not "All")
 			if (template) {
 				const initialSelections: Record<string, string> = {};
+				const initialAllSelections: Record<string, boolean> = {};
 				template.variables.forEach((variable) => {
 					if (variable.options.length > 0) {
 						initialSelections[variable.name] = variable.options[0].id;
 					}
+					initialAllSelections[variable.name] = false;
 				});
 				setVariableSelections(initialSelections);
+				setAllSelections(initialAllSelections);
 			} else {
 				setVariableSelections({});
+				setAllSelections({});
 			}
 		} else {
 			setCurrentTemplate(null);
 			setVariableSelections({});
+			setAllSelections({});
 		}
 	}, [selectedTemplate, templates]);
 
@@ -204,6 +219,56 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 		}));
 	};
 
+	const handleAllChange = (variableName: string, isAll: boolean) => {
+		setAllSelections((prev) => ({
+			...prev,
+			[variableName]: isAll,
+		}));
+	};
+
+	// Build variable axes for combination calculation
+	const variableAxes: VariableAxis[] = useMemo(() => {
+		if (!currentTemplate) return [];
+		return currentTemplate.variables.map((variable) => ({
+			name: variable.name,
+			options: variable.options,
+			selectAll: allSelections[variable.name] ?? false,
+			selectedId: variableSelections[variable.name],
+		}));
+	}, [currentTemplate, allSelections, variableSelections]);
+
+	// Calculate combination count for Generate All button
+	const combinationCount = useMemo(() => {
+		return countCombinations(variableAxes);
+	}, [variableAxes]);
+
+	// Check if any variable has "All" selected
+	const hasAnyAllSelected = useMemo(() => {
+		return Object.values(allSelections).some((v) => v);
+	}, [allSelections]);
+
+	// Build prompt from template pattern and specific variable values
+	const buildPromptFromVariableValues = (
+		templateValues: Record<string, string>
+	): string => {
+		if (!currentTemplate) return "";
+
+		let prompt = currentTemplate.promptPattern;
+		currentTemplate.variables.forEach((variable) => {
+			const selectedOptionId = templateValues[variable.name];
+			const selectedOption = variable.options.find(
+				(o) => o.id === selectedOptionId
+			);
+			if (selectedOption) {
+				prompt = prompt.replace(
+					new RegExp(`\\{${variable.name}\\}`, "g"),
+					selectedOption.promptFragment
+				);
+			}
+		});
+		return prompt;
+	};
+
 	const handleGenerate = async () => {
 		if (!canGenerate || isGenerating) return;
 
@@ -278,6 +343,78 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 		}
 	};
 
+	const handleGenerateAll = async () => {
+		if (!currentTemplate || !hasAnyAllSelected) return;
+
+		try {
+			// Compute all combinations based on current selections
+			const combinations = computeCombinations(variableAxes);
+
+			// Use theme defaults if available, otherwise use hardcoded defaults
+			const model = currentTheme?.defaults.model || "dreamshaper-xl";
+			const width = currentTheme?.defaults.width || 512;
+			const height = currentTheme?.defaults.height || 512;
+			const steps = currentTheme?.defaults.steps || 20;
+			const cfgScale = currentTheme?.defaults.cfgScale || 7;
+			const negativePrompt = currentTheme?.negativePrompt || "";
+
+			// Get variable order from the template for consistent path generation
+			const variableOrder = currentTemplate.variables.map((v) => v.name);
+
+			// Queue each combination
+			for (const templateValues of combinations) {
+				// Build prompt for this combination
+				const basePrompt = buildPromptFromVariableValues(templateValues);
+				let finalPrompt = basePrompt;
+				if (currentTheme && currentTheme.stylePrompt) {
+					finalPrompt = `${currentTheme.stylePrompt}, ${basePrompt}`;
+				}
+
+				// Generate a unique request ID
+				const requestId = `gen-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+				// Use a random seed for each image
+				const seed = Math.floor(Math.random() * 2147483647);
+				const timestamp = Date.now();
+
+				// Build output path via IPC
+				const outputPath = await window.forge.output.buildPath({
+					themeId: selectedTheme || null,
+					templateId: selectedTemplate || null,
+					templateValues,
+					variableOrder,
+					seed,
+					timestamp,
+				});
+
+				// Build the generation request
+				const request = {
+					id: requestId,
+					themeId: selectedTheme || null,
+					templateId: selectedTemplate || null,
+					templateValues,
+					prompt: finalPrompt,
+					negativePrompt,
+					model,
+					width,
+					height,
+					steps,
+					cfgScale,
+					seed,
+					outputPath,
+				};
+
+				// Add to queue
+				await window.forge.queue.add(request);
+				console.log("Added to queue:", requestId);
+			}
+
+			console.log(`Added ${combinations.length} items to queue`);
+		} catch (err) {
+			console.error("Failed to add to queue:", err);
+		}
+	};
+
 	return (
 		<aside className="generation-panel">
 			<div className="panel-header">
@@ -339,13 +476,26 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 					<div className="template-variables-section">
 						<label className="section-label">Template Variables</label>
 						{currentTemplate.variables.map((variable) => (
-							<div key={variable.name} className="field">
-								<label>{variable.name}</label>
+							<div key={variable.name} className="field variable-field">
+								<div className="variable-header">
+									<label>{variable.name}</label>
+									<label className="all-checkbox">
+										<input
+											type="checkbox"
+											checked={allSelections[variable.name] ?? false}
+											onChange={(e) =>
+												handleAllChange(variable.name, e.target.checked)
+											}
+										/>
+										All
+									</label>
+								</div>
 								<select
 									value={variableSelections[variable.name] || ""}
 									onChange={(e) =>
 										handleVariableChange(variable.name, e.target.value)
 									}
+									disabled={allSelections[variable.name] ?? false}
 								>
 									{variable.options.map((option) => (
 										<option key={option.id} value={option.id}>
@@ -409,8 +559,12 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 					</button>
 
 					{selectedTemplate && (
-						<button className="generate-btn" disabled>
-							Generate All
+						<button
+							className="generate-btn"
+							onClick={handleGenerateAll}
+							disabled={!hasAnyAllSelected || isGenerating}
+						>
+							Generate All{hasAnyAllSelected ? `: ${combinationCount}` : ""}
 						</button>
 					)}
 				</div>
