@@ -4,6 +4,8 @@
 import { getNextPending, updateQueueStatus } from "../db/queue";
 import { recordGeneration } from "../db/generations";
 import { generateImage } from "../../shared/sd-cpp";
+import { removeBackground, getTransparentPath } from "./background-removal";
+import { getSettings } from "../data";
 import type { QueueItem, GenerationRecord } from "../../shared/types";
 import type { GenerationProgress } from "../../shared/sd-cpp";
 
@@ -122,7 +124,21 @@ export const createQueueProcessor = (callbacks?: QueueProcessorCallbacks): Queue
 					resultSeed: seed,
 				});
 
-				// Record in generation history
+				// Remove background if setting is enabled (before recording)
+				let transparentPath: string | null = null;
+				const settings = getSettings();
+				if (settings.removeBackground) {
+					const targetPath = getTransparentPath(request.outputPath);
+					const bgResult = await removeBackground(request.outputPath, targetPath);
+					if (bgResult.success) {
+						transparentPath = targetPath;
+					} else {
+						console.error(`[QueueProcessor] Background removal failed: ${bgResult.error}`);
+						// Continue anyway - original image is still saved, transparentPath stays null
+					}
+				}
+
+				// Record in generation history (after background removal so we have the path)
 				const record: GenerationRecord = {
 					id,
 					themeId: request.themeId,
@@ -132,6 +148,7 @@ export const createQueueProcessor = (callbacks?: QueueProcessorCallbacks): Queue
 					negativePrompt: request.negativePrompt,
 					seed,
 					outputPath: request.outputPath,
+					transparentPath,
 					model: request.model,
 					width: request.width,
 					height: request.height,

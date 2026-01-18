@@ -95,9 +95,9 @@ export const ImagePreview = ({ record, themes, templates, onClose }: Props) => {
 				</button>
 
 				<div className="image-preview-content">
-					<div className="image-preview-image-container">
+					<div className="image-preview-image-container checkerboard-bg">
 						<img
-							src={`forge-file://${record.outputPath}`}
+							src={`forge-file://${record.transparentPath || record.outputPath}`}
 							alt={record.prompt}
 							className="image-preview-image"
 							data-testid="image-preview-image"

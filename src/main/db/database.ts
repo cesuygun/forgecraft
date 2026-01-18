@@ -68,6 +68,13 @@ const migrations: { version: number; up: string }[] = [
 			CREATE INDEX IF NOT EXISTS idx_generations_template ON generations(template_id);
 		`,
 	},
+	{
+		version: 2,
+		up: `
+			-- Add transparent_path column for background-removed images
+			ALTER TABLE generations ADD COLUMN transparent_path TEXT;
+		`,
+	},
 ];
 
 const getCurrentVersion = (database: Database.Database): number => {

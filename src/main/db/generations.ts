@@ -14,6 +14,7 @@ interface GenerationRow {
 	negative_prompt: string | null;
 	seed: number;
 	output_path: string;
+	transparent_path: string | null;
 	model: string;
 	width: number;
 	height: number;
@@ -35,6 +36,7 @@ const rowToGenerationRecord = (row: GenerationRow): GenerationRecord => ({
 	negativePrompt: row.negative_prompt,
 	seed: row.seed,
 	outputPath: row.output_path,
+	transparentPath: row.transparent_path,
 	model: row.model,
 	width: row.width,
 	height: row.height,
@@ -50,9 +52,9 @@ export const recordGeneration = (record: GenerationRecord): void => {
 	db.prepare(
 		`INSERT INTO generations (
 			id, theme_id, template_id, template_values, prompt, negative_prompt,
-			seed, output_path, model, width, height, steps, cfg_scale,
+			seed, output_path, transparent_path, model, width, height, steps, cfg_scale,
 			generation_time_ms, created_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 	).run(
 		record.id,
 		record.themeId,
@@ -62,6 +64,7 @@ export const recordGeneration = (record: GenerationRecord): void => {
 		record.negativePrompt,
 		record.seed,
 		record.outputPath,
+		record.transparentPath,
 		record.model,
 		record.width,
 		record.height,

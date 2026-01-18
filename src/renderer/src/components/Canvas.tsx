@@ -23,6 +23,7 @@ interface Props {
 const VIEW_TITLES: Record<View, string> = {
 	themes: "Themes",
 	templates: "Templates",
+	models: "Models",
 	history: "History",
 	queue: "Queue",
 	settings: "Settings",
@@ -38,6 +39,7 @@ export const Canvas = ({ view }: Props) => {
 			<div className="canvas-content">
 				{view === "themes" && <ThemesView />}
 				{view === "templates" && <TemplatesView />}
+				{view === "models" && <ModelsView />}
 				{view === "history" && <HistoryView />}
 				{view === "queue" && <QueueView />}
 				{view === "settings" && <SettingsView />}
@@ -415,6 +417,159 @@ const TemplatesView = () => {
 	);
 };
 
+const ModelsView = () => {
+	const [models, setModels] = useState<SdModel[]>([]);
+	const [installedIds, setInstalledIds] = useState<Set<string>>(new Set());
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [downloading, setDownloading] = useState<string | null>(null);
+	const [downloadProgress, setDownloadProgress] = useState<number>(0);
+
+	const loadModels = useCallback(async () => {
+		try {
+			setError(null);
+			const [allModels, installed] = await Promise.all([
+				window.forge.models.list(),
+				window.forge.models.installed(),
+			]);
+			setModels(allModels);
+			setInstalledIds(new Set(installed.map((m) => m.id)));
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Failed to load models");
+		} finally {
+			setIsLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		loadModels();
+	}, [loadModels]);
+
+	// Subscribe to download progress with cleanup
+	useEffect(() => {
+		let mounted = true;
+		const unsubscribe = window.forge.models.onDownloadProgress((progress) => {
+			if (mounted && progress.modelId === downloading) {
+				setDownloadProgress(progress.percent);
+			}
+		});
+		return () => {
+			mounted = false;
+			unsubscribe();
+		};
+	}, [downloading]);
+
+	const handleDownload = async (modelId: string) => {
+		setDownloading(modelId);
+		setDownloadProgress(0);
+		try {
+			await window.forge.models.download(modelId);
+			setInstalledIds((prev) => new Set([...prev, modelId]));
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Download failed");
+		} finally {
+			setDownloading(null);
+			setDownloadProgress(0);
+		}
+	};
+
+	const formatSize = (bytes: number): string => {
+		const gb = bytes / 1_000_000_000;
+		return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(bytes / 1_000_000).toFixed(0)} MB`;
+	};
+
+	if (isLoading) {
+		return (
+			<div className="models-view">
+				<div className="loading-state">
+					<div className="loading-spinner" />
+					<p>Loading models...</p>
+				</div>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="models-view">
+				<div className="error-state">
+					<span className="icon">!</span>
+					<h3>Error Loading Models</h3>
+					<p>{error}</p>
+					<button className="primary" onClick={loadModels}>
+						Retry
+					</button>
+				</div>
+			</div>
+		);
+	}
+
+	if (models.length === 0) {
+		return (
+			<div className="models-view">
+				<div className="empty-state">
+					<span className="icon">M</span>
+					<h3>No Models Available</h3>
+					<p>No models are defined in the catalog.</p>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="models-view">
+			<div className="models-grid">
+				{models.map((model) => {
+					const isInstalled = installedIds.has(model.id);
+					const isDownloading = downloading === model.id;
+
+					return (
+						<div key={model.id} className="model-card" data-testid={`model-card-${model.id}`}>
+							<div className="model-card-header">
+								<span className="model-icon">M</span>
+								<div className="model-title">
+									<h4 className="model-name">{model.name}</h4>
+									<span className="model-type-badge">{model.type.toUpperCase()}</span>
+								</div>
+							</div>
+							{model.description && (
+								<p className="model-description">{model.description}</p>
+							)}
+							<div className="model-card-meta">
+								<span className="meta-item">{formatSize(model.size)}</span>
+								{model.tags?.map((tag) => (
+									<span key={tag} className="meta-tag">{tag}</span>
+								))}
+							</div>
+							<div className="model-card-actions">
+								{isDownloading ? (
+									<div className="download-progress" data-testid={`download-progress-${model.id}`}>
+										<div
+											className="download-progress-bar"
+											style={{ width: `${downloadProgress}%` }}
+										/>
+										<span className="download-progress-text">{downloadProgress}%</span>
+									</div>
+								) : isInstalled ? (
+									<span className="installed-badge" data-testid={`installed-${model.id}`}>Installed</span>
+								) : (
+									<button
+										className="primary"
+										onClick={() => handleDownload(model.id)}
+										data-testid={`download-${model.id}`}
+									>
+										Download
+									</button>
+								)}
+							</div>
+						</div>
+					);
+				})}
+			</div>
+		</div>
+	);
+};
+
 const HistoryView = () => {
 	const [generations, setGenerations] = useState<GenerationRecord[]>([]);
 	const [themes, setThemes] = useState<Theme[]>([]);
@@ -576,41 +731,44 @@ const HistoryView = () => {
 				</div>
 			) : (
 				<div className="history-grid">
-					{generations.map((gen) => (
-						<div
-							key={gen.id}
-							className="history-card"
-							onClick={() => setPreviewRecord(gen)}
-							data-testid={`history-card-${gen.id}`}
-						>
-							<div className="history-card-image">
-								<img
-									src={`forge-file://${gen.outputPath}`}
-									alt={gen.prompt}
-									loading="lazy"
-								/>
-							</div>
-							<div className="history-card-info">
-								<p className="history-prompt">{truncatePrompt(gen.prompt)}</p>
-								<div className="history-meta">
-									{gen.themeId && (
-										<span className="meta-tag theme-tag">
-											{getThemeName(gen.themeId)}
-										</span>
-									)}
-									{gen.templateId && (
-										<span className="meta-tag template-tag">
-											{getTemplateName(gen.templateId)}
-										</span>
-									)}
+					{generations.map((gen) => {
+						const imagePath = gen.transparentPath || gen.outputPath;
+						return (
+							<div
+								key={gen.id}
+								className="history-card"
+								onClick={() => setPreviewRecord(gen)}
+								data-testid={`history-card-${gen.id}`}
+							>
+								<div className="history-card-image checkerboard-bg">
+									<img
+										src={`forge-file://${imagePath}`}
+										alt={gen.prompt}
+										loading="lazy"
+									/>
 								</div>
-								<div className="history-details">
-									<span className="history-date">{formatDate(gen.createdAt)}</span>
-									<span className="history-seed">Seed: {gen.seed}</span>
+								<div className="history-card-info">
+									<p className="history-prompt">{truncatePrompt(gen.prompt)}</p>
+									<div className="history-meta">
+										{gen.themeId && (
+											<span className="meta-tag theme-tag">
+												{getThemeName(gen.themeId)}
+											</span>
+										)}
+										{gen.templateId && (
+											<span className="meta-tag template-tag">
+												{getTemplateName(gen.templateId)}
+											</span>
+										)}
+									</div>
+									<div className="history-details">
+										<span className="history-date">{formatDate(gen.createdAt)}</span>
+										<span className="history-seed">Seed: {gen.seed}</span>
+									</div>
 								</div>
 							</div>
-						</div>
-					))}
+						);
+					})}
 				</div>
 			)}
 
@@ -799,6 +957,7 @@ const QueueView = () => {
 		negativePrompt: item.request.negativePrompt || null,
 		seed: item.resultSeed ?? item.request.seed ?? 0,
 		outputPath: item.request.outputPath,
+		transparentPath: null,
 		model: item.request.model,
 		width: item.request.width,
 		height: item.request.height,
@@ -1040,6 +1199,7 @@ const SettingsView = () => {
 	const [formCfgScale, setFormCfgScale] = useState("7");
 	const [formWidth, setFormWidth] = useState("512");
 	const [formHeight, setFormHeight] = useState("512");
+	const [formRemoveBackground, setFormRemoveBackground] = useState(true);
 
 	const loadSettings = useCallback(async () => {
 		try {
@@ -1057,6 +1217,7 @@ const SettingsView = () => {
 			setFormCfgScale(String(loadedSettings.defaultCfgScale));
 			setFormWidth(String(loadedSettings.defaultWidth));
 			setFormHeight(String(loadedSettings.defaultHeight));
+			setFormRemoveBackground(loadedSettings.removeBackground);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to load settings");
 		} finally {
@@ -1075,11 +1236,13 @@ const SettingsView = () => {
 
 		try {
 			const updatedSettings: AppSettings = {
+				...settings!,
 				defaultModel: formModel,
 				defaultSteps: parseInt(formSteps, 10),
 				defaultCfgScale: parseFloat(formCfgScale),
 				defaultWidth: parseInt(formWidth, 10),
 				defaultHeight: parseInt(formHeight, 10),
+				removeBackground: formRemoveBackground,
 			};
 
 			await window.forge.settings.set(updatedSettings);
@@ -1102,6 +1265,7 @@ const SettingsView = () => {
 			setFormCfgScale(String(settings.defaultCfgScale));
 			setFormWidth(String(settings.defaultWidth));
 			setFormHeight(String(settings.defaultHeight));
+			setFormRemoveBackground(settings.removeBackground);
 		}
 		setSaveError(null);
 		setSaveSuccess(false);
@@ -1223,6 +1387,21 @@ const SettingsView = () => {
 							/>
 							<p className="field-hint">64-2048, divisible by 8</p>
 						</div>
+					</div>
+
+					<div className="form-field checkbox-field">
+						<label htmlFor="settings-remove-bg" className="checkbox-label">
+							<input
+								id="settings-remove-bg"
+								type="checkbox"
+								checked={formRemoveBackground}
+								onChange={(e) => setFormRemoveBackground(e.target.checked)}
+							/>
+							<span>Remove background from generated images</span>
+						</label>
+						<p className="field-hint">
+							Creates a transparent PNG version alongside the original
+						</p>
 					</div>
 
 					{saveError && (

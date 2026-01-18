@@ -23,6 +23,7 @@ const createRecord = (id: string, overrides?: Partial<GenerationRecord>): Genera
 	negativePrompt: "test negative",
 	seed: 12345,
 	outputPath: "/output/test.png",
+	transparentPath: null,
 	model: "test-model",
 	width: 512,
 	height: 512,

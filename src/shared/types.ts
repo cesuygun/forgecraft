@@ -108,6 +108,7 @@ export interface GenerationRecord {
 	negativePrompt: string | null;
 	seed: number;
 	outputPath: string;
+	transparentPath: string | null;
 	model: string;
 	width: number;
 	height: number;
@@ -190,6 +191,7 @@ export interface AppSettings {
 	defaultCfgScale: number;
 	defaultWidth: number;
 	defaultHeight: number;
+	removeBackground: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -198,6 +200,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 	defaultCfgScale: 7,
 	defaultWidth: 512,
 	defaultHeight: 512,
+	removeBackground: true,
 };
 
 // ============================================================================
