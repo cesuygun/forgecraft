@@ -3,9 +3,16 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { View } from "./Forge";
-import type { Theme, Template, GenerationRecord } from "@shared/types";
+import type {
+	Theme,
+	Template,
+	GenerationRecord,
+	QueueItem,
+	GenerationProgressMessage,
+} from "@shared/types";
 import { ThemeForm } from "./ThemeForm";
 import { TemplateForm } from "./TemplateForm";
+import { ImagePreview } from "./ImagePreview";
 
 interface Props {
 	view: View;
@@ -412,6 +419,9 @@ const HistoryView = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [filterThemeId, setFilterThemeId] = useState<string>("");
 	const [filterTemplateId, setFilterTemplateId] = useState<string>("");
+	const [previewRecord, setPreviewRecord] = useState<GenerationRecord | null>(
+		null
+	);
 
 	// Load themes and templates for filter dropdowns
 	const loadFilters = useCallback(async () => {
@@ -563,7 +573,12 @@ const HistoryView = () => {
 			) : (
 				<div className="history-grid">
 					{generations.map((gen) => (
-						<div key={gen.id} className="history-card">
+						<div
+							key={gen.id}
+							className="history-card"
+							onClick={() => setPreviewRecord(gen)}
+							data-testid={`history-card-${gen.id}`}
+						>
 							<div className="history-card-image">
 								<img
 									src={`file://${gen.outputPath}`}
@@ -594,21 +609,370 @@ const HistoryView = () => {
 					))}
 				</div>
 			)}
+
+			{previewRecord && (
+				<ImagePreview
+					record={previewRecord}
+					themes={themes}
+					templates={templates}
+					onClose={() => setPreviewRecord(null)}
+				/>
+			)}
 		</div>
 	);
 };
 
 const QueueView = () => {
+	const [queueItems, setQueueItems] = useState<QueueItem[]>([]);
+	const [themes, setThemes] = useState<Theme[]>([]);
+	const [templates, setTemplates] = useState<Template[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [currentProgress, setCurrentProgress] = useState<number>(0);
+	const [generatingId, setGeneratingId] = useState<string | null>(null);
+	const [previewItem, setPreviewItem] = useState<QueueItem | null>(null);
+
+	// Load themes and templates for preview
+	const loadFilters = useCallback(async () => {
+		try {
+			const [themeList, templateList] = await Promise.all([
+				window.forge.themes.list(),
+				window.forge.templates.list(),
+			]);
+			setThemes(themeList);
+			setTemplates(templateList);
+		} catch (err) {
+			console.error("Failed to load filters:", err);
+		}
+	}, []);
+
+	const loadQueue = useCallback(async () => {
+		try {
+			setError(null);
+			const items = await window.forge.queue.list();
+			setQueueItems(items);
+			// Find the currently generating item
+			const generating = items.find((item) => item.status === "generating");
+			setGeneratingId(generating?.id ?? null);
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Failed to load queue");
+		} finally {
+			setIsLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		loadFilters();
+	}, [loadFilters]);
+
+	useEffect(() => {
+		loadQueue();
+	}, [loadQueue]);
+
+	// Subscribe to queue events for real-time updates
+	useEffect(() => {
+		// Subscribe to queue status changes to reload the list
+		const unsubStatus = window.forge.queue.onStatusChange(() => {
+			loadQueue();
+		});
+
+		// Subscribe to generation progress
+		const unsubProgress = window.forge.queue.onProgress(
+			(progressMsg: GenerationProgressMessage) => {
+				setCurrentProgress(progressMsg.percent);
+				setGeneratingId(progressMsg.requestId);
+			}
+		);
+
+		// Subscribe to generation complete
+		const unsubComplete = window.forge.queue.onComplete(() => {
+			setCurrentProgress(0);
+			loadQueue();
+		});
+
+		// Subscribe to generation failed
+		const unsubFailed = window.forge.queue.onFailed(() => {
+			setCurrentProgress(0);
+			loadQueue();
+		});
+
+		return () => {
+			unsubStatus();
+			unsubProgress();
+			unsubComplete();
+			unsubFailed();
+		};
+	}, [loadQueue]);
+
+	const handleCancel = async (id: string) => {
+		try {
+			await window.forge.queue.cancel(id);
+			// Update local state optimistically
+			setQueueItems((prev) => prev.filter((item) => item.id !== id));
+		} catch (err) {
+			console.error("Failed to cancel item:", err);
+			// Reload to get actual state
+			loadQueue();
+		}
+	};
+
+	const handleRetry = async (id: string) => {
+		try {
+			await window.forge.queue.retry(id);
+			// Update local state optimistically
+			setQueueItems((prev) =>
+				prev.map((item) =>
+					item.id === id
+						? { ...item, status: "pending" as const, error: null }
+						: item
+				)
+			);
+		} catch (err) {
+			console.error("Failed to retry item:", err);
+			// Reload to get actual state
+			loadQueue();
+		}
+	};
+
+	const formatTime = (timestamp: number | null): string => {
+		if (!timestamp) return "-";
+		const date = new Date(timestamp);
+		return date.toLocaleTimeString(undefined, {
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+	};
+
+	const truncatePrompt = (prompt: string, maxLength = 60): string => {
+		return prompt.length > maxLength
+			? `${prompt.substring(0, maxLength)}...`
+			: prompt;
+	};
+
+	const getStatusIcon = (status: QueueItem["status"]): string => {
+		switch (status) {
+			case "pending":
+				return "...";
+			case "generating":
+				return "~";
+			case "complete":
+				return "V";
+			case "failed":
+				return "X";
+			default:
+				return "?";
+		}
+	};
+
+	// Convert a completed QueueItem to GenerationRecord for preview
+	const queueItemToRecord = (item: QueueItem): GenerationRecord => ({
+		id: item.id,
+		themeId: item.request.themeId,
+		templateId: item.request.templateId,
+		templateValues: item.request.templateValues,
+		prompt: item.request.prompt,
+		negativePrompt: item.request.negativePrompt || null,
+		seed: item.resultSeed ?? item.request.seed ?? 0,
+		outputPath: item.request.outputPath,
+		model: item.request.model,
+		width: item.request.width,
+		height: item.request.height,
+		steps: item.request.steps,
+		cfgScale: item.request.cfgScale,
+		generationTimeMs:
+			item.completedAt && item.startedAt
+				? item.completedAt - item.startedAt
+				: null,
+		createdAt: item.createdAt,
+	});
+
+	// Group items by status for better organization
+	const generatingItems = queueItems.filter(
+		(item) => item.status === "generating"
+	);
+	const pendingItems = queueItems.filter((item) => item.status === "pending");
+	const failedItems = queueItems.filter((item) => item.status === "failed");
+	const completedItems = queueItems.filter(
+		(item) => item.status === "complete"
+	);
+
+	// Combine in display order: generating first, then pending, failed, completed
+	const sortedItems = [
+		...generatingItems,
+		...pendingItems,
+		...failedItems,
+		...completedItems,
+	];
+
+	if (isLoading) {
+		return (
+			<div className="queue-view">
+				<div className="loading-state">
+					<div className="loading-spinner" />
+					<p>Loading queue...</p>
+				</div>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="queue-view">
+				<div className="error-state">
+					<span className="icon">!</span>
+					<h3>Error Loading Queue</h3>
+					<p>{error}</p>
+					<button className="primary" onClick={loadQueue}>
+						Retry
+					</button>
+				</div>
+			</div>
+		);
+	}
+
+	if (sortedItems.length === 0) {
+		return (
+			<div className="queue-view">
+				<div className="empty-state">
+					<span className="icon">Q</span>
+					<h3>Queue Empty</h3>
+					<p>
+						No pending generations. Add items to the queue from the Generation
+						Panel or use &quot;Generate All&quot; on a template.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="queue-view">
-			<div className="empty-state">
-				<span className="icon">Q</span>
-				<h3>Queue Empty</h3>
-				<p>
-					No pending generations. Add items to the queue from the Generation
-					Panel or use &quot;Generate All&quot; on a template.
-				</p>
+			<div className="queue-toolbar">
+				<span className="queue-summary">
+					{pendingItems.length > 0 && (
+						<span className="summary-stat pending">
+							{pendingItems.length} pending
+						</span>
+					)}
+					{generatingItems.length > 0 && (
+						<span className="summary-stat generating">1 generating</span>
+					)}
+					{failedItems.length > 0 && (
+						<span className="summary-stat failed">
+							{failedItems.length} failed
+						</span>
+					)}
+					{completedItems.length > 0 && (
+						<span className="summary-stat completed">
+							{completedItems.length} completed
+						</span>
+					)}
+				</span>
 			</div>
+
+			<div className="queue-list">
+				{sortedItems.map((item) => (
+					<div
+						key={item.id}
+						className={`queue-item queue-item-${item.status}`}
+						data-testid={`queue-item-${item.id}`}
+					>
+						<div className="queue-item-status">
+							<span
+								className={`status-icon status-${item.status}`}
+								title={item.status}
+							>
+								{getStatusIcon(item.status)}
+							</span>
+						</div>
+
+						{item.status === "complete" && (
+							<div
+								className="queue-item-thumbnail"
+								onClick={() => setPreviewItem(item)}
+								title="Click to preview"
+								data-testid={`queue-thumbnail-${item.id}`}
+							>
+								<img
+									src={`file://${item.request.outputPath}`}
+									alt={item.request.prompt}
+								/>
+							</div>
+						)}
+
+						<div className="queue-item-content">
+							<p className="queue-item-prompt">
+								{truncatePrompt(item.request.prompt)}
+							</p>
+
+							{item.status === "generating" && (
+								<div className="queue-item-progress">
+									<div className="progress-bar">
+										<div
+											className="progress-fill"
+											style={{
+												width: `${item.id === generatingId ? currentProgress : 0}%`,
+											}}
+										/>
+									</div>
+									<span className="progress-percent">
+										{item.id === generatingId ? currentProgress : 0}%
+									</span>
+								</div>
+							)}
+
+							{item.status === "failed" && item.error && (
+								<p className="queue-item-error">{item.error}</p>
+							)}
+
+							<div className="queue-item-meta">
+								<span className="queue-item-time">
+									Added: {formatTime(item.createdAt)}
+								</span>
+								{item.startedAt && (
+									<span className="queue-item-time">
+										Started: {formatTime(item.startedAt)}
+									</span>
+								)}
+								<span className="queue-item-model">{item.request.model}</span>
+								<span className="queue-item-size">
+									{item.request.width}x{item.request.height}
+								</span>
+							</div>
+						</div>
+
+						<div className="queue-item-actions">
+							{item.status === "pending" && (
+								<button
+									className="danger queue-action-btn"
+									onClick={() => handleCancel(item.id)}
+									title="Cancel"
+								>
+									Cancel
+								</button>
+							)}
+							{item.status === "failed" && (
+								<button
+									className="primary queue-action-btn"
+									onClick={() => handleRetry(item.id)}
+									title="Retry"
+								>
+									Retry
+								</button>
+							)}
+						</div>
+					</div>
+				))}
+			</div>
+
+			{previewItem && (
+				<ImagePreview
+					record={queueItemToRecord(previewItem)}
+					themes={themes}
+					templates={templates}
+					onClose={() => setPreviewItem(null)}
+				/>
+			)}
 		</div>
 	);
 };
