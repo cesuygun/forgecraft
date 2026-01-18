@@ -832,3 +832,251 @@ button.danger:hover:not(:disabled) {
 .default-value {
 	color: var(--text-primary);
 }
+
+/* Templates Grid */
+.templates-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 16px;
+}
+
+/* Template Card */
+.template-card {
+	background: var(--bg-secondary);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	padding: 16px;
+	transition: all 0.15s ease;
+}
+
+.template-card:hover {
+	border-color: var(--accent-primary);
+	box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.template-card-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 12px;
+}
+
+.template-icon {
+	width: 32px;
+	height: 32px;
+	border-radius: var(--radius-sm);
+	background: var(--gold);
+	color: var(--bg-primary);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 14px;
+}
+
+.template-name {
+	font-size: 15px;
+	font-weight: 600;
+	flex: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.template-variables {
+	font-size: 12px;
+	color: var(--gold-dim);
+	margin-bottom: 8px;
+}
+
+.template-pattern-preview {
+	font-size: 13px;
+	color: var(--text-secondary);
+	line-height: 1.4;
+	margin-bottom: 12px;
+	min-height: 38px;
+	font-family: monospace;
+	background: var(--bg-tertiary);
+	padding: 8px;
+	border-radius: var(--radius-sm);
+}
+
+.template-card-actions {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+}
+
+.template-card-actions button {
+	font-size: 12px;
+	padding: 6px 12px;
+}
+
+/* Template Form */
+.template-form .form-body {
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.template-form .modal-content {
+	max-width: 600px;
+}
+
+/* Variables List */
+.variables-list {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.variable-item {
+	background: var(--bg-tertiary);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	padding: 12px;
+}
+
+.variable-header {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.variable-name-field {
+	flex: 1;
+}
+
+.variable-name-field input {
+	width: 100%;
+}
+
+.remove-btn {
+	background: transparent;
+	color: var(--error);
+	padding: 4px 8px;
+	font-size: 18px;
+	line-height: 1;
+	border: 1px solid transparent;
+}
+
+.remove-btn:hover:not(:disabled) {
+	border-color: var(--error);
+}
+
+/* Options List */
+.options-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.options-label {
+	font-size: 11px;
+	color: var(--text-secondary);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin-bottom: 4px;
+}
+
+.option-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+}
+
+.option-fields {
+	display: flex;
+	flex: 1;
+	gap: 8px;
+}
+
+.option-field {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.option-field input {
+	width: 100%;
+	padding: 8px;
+	font-size: 13px;
+}
+
+.option-field:nth-child(1) {
+	flex: 0 0 80px;
+}
+
+.option-field:nth-child(2) {
+	flex: 0 0 80px;
+}
+
+.option-prompt {
+	flex: 1 !important;
+}
+
+.option-field input.has-error {
+	border-color: var(--error);
+}
+
+.field-error.mini {
+	font-size: 10px;
+}
+
+.remove-option-btn {
+	background: transparent;
+	color: var(--text-muted);
+	padding: 6px 8px;
+	font-size: 14px;
+	line-height: 1;
+}
+
+.remove-option-btn:hover:not(:disabled) {
+	color: var(--error);
+}
+
+.add-option-btn {
+	align-self: flex-start;
+	font-size: 12px;
+	padding: 6px 12px;
+	color: var(--text-secondary);
+}
+
+.add-option-btn:hover:not(:disabled) {
+	color: var(--text-primary);
+}
+
+.add-variable-btn {
+	align-self: flex-start;
+	font-size: 13px;
+	padding: 8px 16px;
+}
+
+/* Template Variables Section in Generation Panel */
+.template-variables-section {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px;
+	background: var(--bg-tertiary);
+	border-radius: var(--radius-md);
+}
+
+.template-variables-section .section-label {
+	font-size: 12px;
+	color: var(--text-secondary);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin-bottom: 4px;
+}
+
+.template-preview {
+	font-family: monospace;
+	font-size: 11px;
+	padding: 8px;
+	background: var(--bg-secondary);
+	border-radius: var(--radius-sm);
+	word-break: break-word;
+}

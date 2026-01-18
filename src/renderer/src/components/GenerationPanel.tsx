@@ -2,7 +2,7 @@
 // ABOUTME: Handles theme/template selection and image generation
 
 import { useState, useEffect } from "react";
-import type { Theme } from "@shared/types";
+import type { Theme, Template } from "@shared/types";
 
 export const GenerationPanel = () => {
 	const [selectedTheme, setSelectedTheme] = useState<string>("");
@@ -15,8 +15,13 @@ export const GenerationPanel = () => {
 	const [themes, setThemes] = useState<Theme[]>([]);
 	const [currentTheme, setCurrentTheme] = useState<Theme | null>(null);
 
-	// Placeholder for templates - will be populated in next task
-	const templates: { id: string; name: string }[] = [];
+	// Template data from API
+	const [templates, setTemplates] = useState<Template[]>([]);
+	const [currentTemplate, setCurrentTemplate] = useState<Template | null>(null);
+	const [variableSelections, setVariableSelections] = useState<
+		Record<string, string>
+	>({});
+
 	const queueStatus = { pending: 0, generating: false };
 
 	// Load themes on mount
@@ -32,6 +37,19 @@ export const GenerationPanel = () => {
 		loadThemes();
 	}, []);
 
+	// Load templates on mount
+	useEffect(() => {
+		const loadTemplates = async () => {
+			try {
+				const list = await window.forge.templates.list();
+				setTemplates(list);
+			} catch (err) {
+				console.error("Failed to load templates:", err);
+			}
+		};
+		loadTemplates();
+	}, []);
+
 	// Update current theme when selection changes
 	useEffect(() => {
 		if (selectedTheme) {
@@ -42,8 +60,58 @@ export const GenerationPanel = () => {
 		}
 	}, [selectedTheme, themes]);
 
+	// Update current template and reset variable selections when selection changes
+	useEffect(() => {
+		if (selectedTemplate) {
+			const template = templates.find((t) => t.id === selectedTemplate);
+			setCurrentTemplate(template || null);
+			// Initialize variable selections with first option for each variable
+			if (template) {
+				const initialSelections: Record<string, string> = {};
+				template.variables.forEach((variable) => {
+					if (variable.options.length > 0) {
+						initialSelections[variable.name] = variable.options[0].id;
+					}
+				});
+				setVariableSelections(initialSelections);
+			} else {
+				setVariableSelections({});
+			}
+		} else {
+			setCurrentTemplate(null);
+			setVariableSelections({});
+		}
+	}, [selectedTemplate, templates]);
+
 	const showRawPromptInput = !selectedTemplate;
 	const canGenerate = showRawPromptInput ? rawPrompt.trim() : selectedTemplate;
+
+	// Build prompt from template pattern and variable selections
+	const buildPromptFromTemplate = (): string => {
+		if (!currentTemplate) return "";
+
+		let prompt = currentTemplate.promptPattern;
+		currentTemplate.variables.forEach((variable) => {
+			const selectedOptionId = variableSelections[variable.name];
+			const selectedOption = variable.options.find(
+				(o) => o.id === selectedOptionId
+			);
+			if (selectedOption) {
+				prompt = prompt.replace(
+					new RegExp(`\\{${variable.name}\\}`, "g"),
+					selectedOption.promptFragment
+				);
+			}
+		});
+		return prompt;
+	};
+
+	const handleVariableChange = (variableName: string, optionId: string) => {
+		setVariableSelections((prev) => ({
+			...prev,
+			[variableName]: optionId,
+		}));
+	};
 
 	const handleGenerate = async () => {
 		if (!canGenerate || isGenerating) return;
@@ -56,10 +124,13 @@ export const GenerationPanel = () => {
 		});
 
 		try {
-			// Build final prompt: combine theme style prompt with user prompt
-			let finalPrompt = rawPrompt.trim();
+			// Build final prompt: from template or raw prompt, combined with theme style
+			let basePrompt = selectedTemplate
+				? buildPromptFromTemplate()
+				: rawPrompt.trim();
+			let finalPrompt = basePrompt;
 			if (currentTheme && currentTheme.stylePrompt) {
-				finalPrompt = `${rawPrompt.trim()}, ${currentTheme.stylePrompt}`;
+				finalPrompt = `${basePrompt}, ${currentTheme.stylePrompt}`;
 			}
 
 			// Use theme defaults if available, otherwise use hardcoded defaults
@@ -148,12 +219,29 @@ export const GenerationPanel = () => {
 					</div>
 				)}
 
-				{/* Dynamic variables will appear here when template is selected */}
-				{selectedTemplate && (
-					<div className="field">
-						<label>Variables</label>
-						<p className="field-note">
-							Template variables will appear here when templates are loaded.
+				{/* Dynamic variables when template is selected */}
+				{currentTemplate && currentTemplate.variables.length > 0 && (
+					<div className="template-variables-section">
+						<label className="section-label">Template Variables</label>
+						{currentTemplate.variables.map((variable) => (
+							<div key={variable.name} className="field">
+								<label>{variable.name}</label>
+								<select
+									value={variableSelections[variable.name] || ""}
+									onChange={(e) =>
+										handleVariableChange(variable.name, e.target.value)
+									}
+								>
+									{variable.options.map((option) => (
+										<option key={option.id} value={option.id}>
+											{option.label}
+										</option>
+									))}
+								</select>
+							</div>
+						))}
+						<p className="field-note template-preview">
+							Preview: {buildPromptFromTemplate()}
 						</p>
 					</div>
 				)}
