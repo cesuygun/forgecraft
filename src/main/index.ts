@@ -7,6 +7,8 @@ import {
   ipcMain,
   shell,
   IpcMainInvokeEvent,
+  protocol,
+  net,
 } from "electron";
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import { join } from "path";
@@ -330,6 +332,12 @@ ipcMain.handle(
 // ============================================================================
 
 app.whenReady().then(() => {
+  // Register custom protocol for serving local files
+  protocol.handle("forge-file", (request) => {
+    const filePath = request.url.replace("forge-file://", "");
+    return net.fetch(`file://${filePath}`);
+  });
+
   // Initialize database
   initDatabase();
 

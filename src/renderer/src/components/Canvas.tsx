@@ -585,7 +585,7 @@ const HistoryView = () => {
 						>
 							<div className="history-card-image">
 								<img
-									src={`file://${gen.outputPath}`}
+									src={`forge-file://${gen.outputPath}`}
 									alt={gen.prompt}
 									loading="lazy"
 								/>
@@ -919,7 +919,7 @@ const QueueView = () => {
 								data-testid={`queue-thumbnail-${item.id}`}
 							>
 								<img
-									src={`file://${item.request.outputPath}`}
+									src={`forge-file://${item.request.outputPath}`}
 									alt={item.request.prompt}
 								/>
 							</div>
