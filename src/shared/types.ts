@@ -180,6 +180,27 @@ export const VALIDATION = {
 } as const;
 
 // ============================================================================
+// APP SETTINGS
+// User-configurable defaults stored in settings.json
+// ============================================================================
+
+export interface AppSettings {
+	defaultModel: string;
+	defaultSteps: number;
+	defaultCfgScale: number;
+	defaultWidth: number;
+	defaultHeight: number;
+}
+
+export const DEFAULT_SETTINGS: AppSettings = {
+	defaultModel: "dreamshaper-xl",
+	defaultSteps: 20,
+	defaultCfgScale: 7,
+	defaultWidth: 512,
+	defaultHeight: 512,
+};
+
+// ============================================================================
 // CRUD INPUT TYPES
 // Shared input types for create/update operations
 // ============================================================================

@@ -9,6 +9,7 @@ import type {
 	GenerationProgressMessage,
 	GenerationCompleteMessage,
 	GenerationFailedMessage,
+	AppSettings,
 } from "@shared/types";
 import {
 	computeCombinations,
@@ -54,6 +55,9 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 	// Track progress of the currently generating queue item (for mini status display)
 	const [queueProgress, setQueueProgress] = useState<number>(0);
 
+	// App settings for defaults
+	const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
+
 	// Load themes on mount
 	useEffect(() => {
 		const loadThemes = async () => {
@@ -78,6 +82,19 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 			}
 		};
 		loadTemplates();
+	}, []);
+
+	// Load app settings on mount
+	useEffect(() => {
+		const loadSettings = async () => {
+			try {
+				const settings = await window.forge.settings.get();
+				setAppSettings(settings);
+			} catch (err) {
+				console.error("Failed to load settings:", err);
+			}
+		};
+		loadSettings();
 	}, []);
 
 	// Update current theme when selection changes
@@ -283,12 +300,12 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 				finalPrompt = `${currentTheme.stylePrompt}, ${basePrompt}`;
 			}
 
-			// Use theme defaults if available, otherwise use hardcoded defaults
-			const model = currentTheme?.defaults.model || "dreamshaper-xl";
-			const width = currentTheme?.defaults.width || 512;
-			const height = currentTheme?.defaults.height || 512;
-			const steps = currentTheme?.defaults.steps || 20;
-			const cfgScale = currentTheme?.defaults.cfgScale || 7;
+			// Use theme defaults if available, otherwise use app settings, finally hardcoded defaults
+			const model = currentTheme?.defaults.model || appSettings?.defaultModel || "dreamshaper-xl";
+			const width = currentTheme?.defaults.width || appSettings?.defaultWidth || 512;
+			const height = currentTheme?.defaults.height || appSettings?.defaultHeight || 512;
+			const steps = currentTheme?.defaults.steps || appSettings?.defaultSteps || 20;
+			const cfgScale = currentTheme?.defaults.cfgScale || appSettings?.defaultCfgScale || 7;
 			const negativePrompt = currentTheme?.negativePrompt || "";
 
 			// Generate a unique request ID
@@ -350,12 +367,12 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 			// Compute all combinations based on current selections
 			const combinations = computeCombinations(variableAxes);
 
-			// Use theme defaults if available, otherwise use hardcoded defaults
-			const model = currentTheme?.defaults.model || "dreamshaper-xl";
-			const width = currentTheme?.defaults.width || 512;
-			const height = currentTheme?.defaults.height || 512;
-			const steps = currentTheme?.defaults.steps || 20;
-			const cfgScale = currentTheme?.defaults.cfgScale || 7;
+			// Use theme defaults if available, otherwise use app settings, finally hardcoded defaults
+			const model = currentTheme?.defaults.model || appSettings?.defaultModel || "dreamshaper-xl";
+			const width = currentTheme?.defaults.width || appSettings?.defaultWidth || 512;
+			const height = currentTheme?.defaults.height || appSettings?.defaultHeight || 512;
+			const steps = currentTheme?.defaults.steps || appSettings?.defaultSteps || 20;
+			const cfgScale = currentTheme?.defaults.cfgScale || appSettings?.defaultCfgScale || 7;
 			const negativePrompt = currentTheme?.negativePrompt || "";
 
 			// Get variable order from the template for consistent path generation

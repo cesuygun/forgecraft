@@ -13,11 +13,6 @@ const VIEWS: { id: View; label: string; icon: string }[] = [
 ];
 
 export const Sidebar = ({ activeView, onViewChange }: Props) => {
-	const handleSettingsClick = () => {
-		// Settings panel will be implemented in Phase 5
-		console.log("Settings clicked - not yet implemented");
-	};
-
 	return (
 		<nav className="sidebar">
 			<div className="sidebar-header">
@@ -39,7 +34,10 @@ export const Sidebar = ({ activeView, onViewChange }: Props) => {
 			</div>
 
 			<div className="sidebar-footer">
-				<button className="nav-item" onClick={handleSettingsClick}>
+				<button
+					className={`nav-item ${activeView === "settings" ? "active" : ""}`}
+					onClick={() => onViewChange("settings")}
+				>
 					<span className="icon">⚙️</span>
 					<span className="label">Settings</span>
 				</button>

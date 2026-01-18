@@ -9,7 +9,9 @@ import type {
 	GenerationRecord,
 	QueueItem,
 	GenerationProgressMessage,
+	AppSettings,
 } from "@shared/types";
+import type { SdModel } from "@shared/sd-models";
 import { ThemeForm } from "./ThemeForm";
 import { TemplateForm } from "./TemplateForm";
 import { ImagePreview } from "./ImagePreview";
@@ -23,6 +25,7 @@ const VIEW_TITLES: Record<View, string> = {
 	templates: "Templates",
 	history: "History",
 	queue: "Queue",
+	settings: "Settings",
 };
 
 export const Canvas = ({ view }: Props) => {
@@ -37,6 +40,7 @@ export const Canvas = ({ view }: Props) => {
 				{view === "templates" && <TemplatesView />}
 				{view === "history" && <HistoryView />}
 				{view === "queue" && <QueueView />}
+				{view === "settings" && <SettingsView />}
 			</div>
 		</main>
 	);
@@ -973,6 +977,233 @@ const QueueView = () => {
 					onClose={() => setPreviewItem(null)}
 				/>
 			)}
+		</div>
+	);
+};
+
+const SettingsView = () => {
+	const [settings, setSettings] = useState<AppSettings | null>(null);
+	const [installedModels, setInstalledModels] = useState<SdModel[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [isSaving, setIsSaving] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [saveError, setSaveError] = useState<string | null>(null);
+	const [saveSuccess, setSaveSuccess] = useState(false);
+
+	// Form state
+	const [formModel, setFormModel] = useState("");
+	const [formSteps, setFormSteps] = useState("20");
+	const [formCfgScale, setFormCfgScale] = useState("7");
+	const [formWidth, setFormWidth] = useState("512");
+	const [formHeight, setFormHeight] = useState("512");
+
+	const loadSettings = useCallback(async () => {
+		try {
+			setError(null);
+			const [loadedSettings, models] = await Promise.all([
+				window.forge.settings.get(),
+				window.forge.models.installed(),
+			]);
+			setSettings(loadedSettings);
+			setInstalledModels(models);
+
+			// Initialize form with loaded settings
+			setFormModel(loadedSettings.defaultModel);
+			setFormSteps(String(loadedSettings.defaultSteps));
+			setFormCfgScale(String(loadedSettings.defaultCfgScale));
+			setFormWidth(String(loadedSettings.defaultWidth));
+			setFormHeight(String(loadedSettings.defaultHeight));
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Failed to load settings");
+		} finally {
+			setIsLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		loadSettings();
+	}, [loadSettings]);
+
+	const handleSave = async () => {
+		setSaveError(null);
+		setSaveSuccess(false);
+		setIsSaving(true);
+
+		try {
+			const updatedSettings: AppSettings = {
+				defaultModel: formModel,
+				defaultSteps: parseInt(formSteps, 10),
+				defaultCfgScale: parseFloat(formCfgScale),
+				defaultWidth: parseInt(formWidth, 10),
+				defaultHeight: parseInt(formHeight, 10),
+			};
+
+			await window.forge.settings.set(updatedSettings);
+			setSettings(updatedSettings);
+			setSaveSuccess(true);
+
+			// Clear success message after 3 seconds
+			setTimeout(() => setSaveSuccess(false), 3000);
+		} catch (err) {
+			setSaveError(err instanceof Error ? err.message : "Failed to save settings");
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	const handleReset = () => {
+		if (settings) {
+			setFormModel(settings.defaultModel);
+			setFormSteps(String(settings.defaultSteps));
+			setFormCfgScale(String(settings.defaultCfgScale));
+			setFormWidth(String(settings.defaultWidth));
+			setFormHeight(String(settings.defaultHeight));
+		}
+		setSaveError(null);
+		setSaveSuccess(false);
+	};
+
+	if (isLoading) {
+		return (
+			<div className="settings-view">
+				<div className="loading-state">
+					<div className="loading-spinner" />
+					<p>Loading settings...</p>
+				</div>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="settings-view">
+				<div className="error-state">
+					<span className="icon">!</span>
+					<h3>Error Loading Settings</h3>
+					<p>{error}</p>
+					<button className="primary" onClick={loadSettings}>
+						Retry
+					</button>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="settings-view">
+			<div className="settings-section">
+				<h3 className="section-title">Default Generation Settings</h3>
+				<p className="section-description">
+					These settings are used when no theme is selected.
+				</p>
+
+				<div className="settings-form">
+					<div className="form-field">
+						<label htmlFor="settings-model">Default Model</label>
+						<select
+							id="settings-model"
+							value={formModel}
+							onChange={(e) => setFormModel(e.target.value)}
+						>
+							{installedModels.length === 0 ? (
+								<option value={formModel}>{formModel} (not installed)</option>
+							) : (
+								installedModels.map((model) => (
+									<option key={model.id} value={model.id}>
+										{model.name}
+									</option>
+								))
+							)}
+						</select>
+						{installedModels.length === 0 && (
+							<p className="field-hint warning">
+								No models installed. Download models from the setup screen.
+							</p>
+						)}
+					</div>
+
+					<div className="form-row">
+						<div className="form-field">
+							<label htmlFor="settings-steps">Steps</label>
+							<input
+								id="settings-steps"
+								type="number"
+								min="1"
+								max="150"
+								value={formSteps}
+								onChange={(e) => setFormSteps(e.target.value)}
+							/>
+							<p className="field-hint">Range: 1-150</p>
+						</div>
+
+						<div className="form-field">
+							<label htmlFor="settings-cfg">CFG Scale</label>
+							<input
+								id="settings-cfg"
+								type="number"
+								min="1"
+								max="30"
+								step="0.5"
+								value={formCfgScale}
+								onChange={(e) => setFormCfgScale(e.target.value)}
+							/>
+							<p className="field-hint">Range: 1-30</p>
+						</div>
+					</div>
+
+					<div className="form-row">
+						<div className="form-field">
+							<label htmlFor="settings-width">Width</label>
+							<input
+								id="settings-width"
+								type="number"
+								min="64"
+								max="2048"
+								step="8"
+								value={formWidth}
+								onChange={(e) => setFormWidth(e.target.value)}
+							/>
+							<p className="field-hint">64-2048, divisible by 8</p>
+						</div>
+
+						<div className="form-field">
+							<label htmlFor="settings-height">Height</label>
+							<input
+								id="settings-height"
+								type="number"
+								min="64"
+								max="2048"
+								step="8"
+								value={formHeight}
+								onChange={(e) => setFormHeight(e.target.value)}
+							/>
+							<p className="field-hint">64-2048, divisible by 8</p>
+						</div>
+					</div>
+
+					{saveError && (
+						<div className="form-error settings-error">
+							<span className="error-icon">!</span>
+							{saveError}
+						</div>
+					)}
+
+					{saveSuccess && (
+						<div className="form-success">
+							Settings saved successfully!
+						</div>
+					)}
+
+					<div className="form-actions settings-actions">
+						<button onClick={handleReset} disabled={isSaving}>
+							Reset
+						</button>
+						<button className="primary" onClick={handleSave} disabled={isSaving}>
+							{isSaving ? "Saving..." : "Save Settings"}
+						</button>
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 };

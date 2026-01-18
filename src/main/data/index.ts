@@ -35,3 +35,5 @@ export {
 	getTemplateOutputPath,
 	getOutputPath,
 } from "./output";
+
+export { getSettings, saveSettings, resetSettings } from "./settings";

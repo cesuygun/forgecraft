@@ -26,6 +26,7 @@ import type {
   GenerationCompleteMessage,
   GenerationFailedMessage,
   QueueDiskFullMessage,
+  AppSettings,
 } from "../shared/types";
 
 // History list options type
@@ -58,6 +59,7 @@ export type {
   GenerationCompleteMessage,
   GenerationFailedMessage,
   QueueDiskFullMessage,
+  AppSettings,
 };
 
 // API exposed to renderer
@@ -192,6 +194,13 @@ const forgeApi = {
       themeId?: string;
       templateId?: string;
     }): Promise<number> => ipcRenderer.invoke("history:count", options),
+  },
+
+  // Settings management
+  settings: {
+    get: (): Promise<AppSettings> => ipcRenderer.invoke("settings:get"),
+    set: (settings: AppSettings): Promise<AppSettings> =>
+      ipcRenderer.invoke("settings:set", settings),
   },
 };
 

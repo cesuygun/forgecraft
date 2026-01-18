@@ -6,7 +6,7 @@ import { Sidebar } from "./Sidebar";
 import { Canvas } from "./Canvas";
 import { GenerationPanel } from "./GenerationPanel";
 
-export type View = "themes" | "templates" | "history" | "queue";
+export type View = "themes" | "templates" | "history" | "queue" | "settings";
 
 export const Forge = () => {
 	const [activeView, setActiveView] = useState<View>("history");

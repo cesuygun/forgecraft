@@ -41,6 +41,8 @@ import {
   updateTemplate,
   deleteTemplate,
   buildOutputPath,
+  getSettings,
+  saveSettings,
 } from "./data";
 import type {
   CreateThemeInput,
@@ -52,7 +54,7 @@ import {
   createQueueService,
   type QueueService,
 } from "./services/queue-service";
-import type { GenerationRequest } from "../shared/types";
+import type { GenerationRequest, AppSettings } from "../shared/types";
 
 // Queue service instance (initialized on app ready)
 let queueService: QueueService | null = null;
@@ -291,6 +293,20 @@ ipcMain.handle(
         )
       : undefined;
     return countGenerations(opts);
+  },
+);
+
+// ============================================================================
+// Settings IPC Handlers
+// ============================================================================
+
+ipcMain.handle("settings:get", () => getSettings());
+
+ipcMain.handle(
+  "settings:set",
+  (_event: IpcMainInvokeEvent, settings: unknown) => {
+    saveSettings(assertObject<AppSettings>(settings, "settings"));
+    return getSettings();
   },
 );
 

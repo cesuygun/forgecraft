@@ -1725,3 +1725,88 @@ button.danger:hover:not(:disabled) {
 	height: 100%;
 	object-fit: cover;
 }
+
+/* Settings View */
+.settings-view {
+	height: 100%;
+	padding: 0;
+}
+
+.settings-section {
+	background: var(--bg-secondary);
+	border-radius: var(--radius-md);
+	padding: 24px;
+	max-width: 600px;
+}
+
+.section-title {
+	font-size: 18px;
+	font-weight: 600;
+	margin: 0 0 8px 0;
+}
+
+.section-description {
+	color: var(--text-secondary);
+	margin: 0 0 24px 0;
+	font-size: 14px;
+}
+
+.settings-form {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.settings-form .form-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.settings-form .form-field label {
+	font-weight: 500;
+	font-size: 13px;
+	color: var(--text-primary);
+	text-transform: none;
+}
+
+.settings-form .form-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+}
+
+.field-hint {
+	font-size: 11px;
+	color: var(--text-muted);
+	margin: 0;
+}
+
+.field-hint.warning {
+	color: var(--warning);
+}
+
+.settings-error {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.settings-error .error-icon {
+	font-weight: bold;
+}
+
+.form-success {
+	background: rgba(46, 204, 113, 0.1);
+	border: 1px solid var(--success);
+	color: var(--success);
+	padding: 12px;
+	border-radius: var(--radius-sm);
+	font-size: 13px;
+}
+
+.settings-actions {
+	padding: 0;
+	border-top: none;
+	margin-top: 8px;
+}

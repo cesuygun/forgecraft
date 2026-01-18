@@ -23,6 +23,7 @@ import type {
   GenerationCompleteMessage,
   GenerationFailedMessage,
   QueueDiskFullMessage,
+  AppSettings,
 } from "@shared/types";
 
 // History list filter options
@@ -100,6 +101,10 @@ export interface ForgeApi {
   history: {
     list: (options?: HistoryListOptions) => Promise<GenerationRecord[]>;
     count: (options?: { themeId?: string; templateId?: string }) => Promise<number>;
+  };
+  settings: {
+    get: () => Promise<AppSettings>;
+    set: (settings: AppSettings) => Promise<AppSettings>;
   };
 }
 
