@@ -117,6 +117,18 @@ const forgeApi = {
       ipcRenderer.invoke("templates:delete", id),
   },
 
+  // Output path utilities
+  output: {
+    buildPath: (options: {
+      themeId: string | null;
+      templateId: string | null;
+      templateValues: Record<string, string> | null;
+      variableOrder?: string[];
+      seed: number;
+      timestamp?: number;
+    }): Promise<string> => ipcRenderer.invoke("output:buildPath", options),
+  },
+
   // Queue management
   queue: {
     add: (request: GenerationRequest): Promise<{ id: string }> =>

@@ -1,8 +1,15 @@
 // ABOUTME: Generation panel component for creating images
-// ABOUTME: Handles theme/template selection and image generation
+// ABOUTME: Handles theme/template selection and image generation via queue
 
 import { useState, useEffect } from "react";
-import type { Theme, Template } from "@shared/types";
+import type {
+	Theme,
+	Template,
+	QueueStatusMessage,
+	GenerationProgressMessage,
+	GenerationCompleteMessage,
+	GenerationFailedMessage,
+} from "@shared/types";
 
 export const GenerationPanel = () => {
 	const [selectedTheme, setSelectedTheme] = useState<string>("");
@@ -22,7 +29,15 @@ export const GenerationPanel = () => {
 		Record<string, string>
 	>({});
 
-	const queueStatus = { pending: 0, generating: false };
+	// Queue status from events
+	const [queueStatus, setQueueStatus] = useState<QueueStatusMessage>({
+		pending: 0,
+		generating: null,
+		completed: 0,
+		failed: 0,
+	});
+	// Track the ID of the current generation request for progress tracking
+	const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
 
 	// Load themes on mount
 	useEffect(() => {
@@ -83,6 +98,65 @@ export const GenerationPanel = () => {
 		}
 	}, [selectedTemplate, templates]);
 
+	// Subscribe to queue events
+	useEffect(() => {
+		// Load initial queue status
+		const loadQueueStatus = async () => {
+			try {
+				const status = await window.forge.queue.getStatus();
+				setQueueStatus(status);
+				setIsGenerating(status.generating !== null);
+			} catch (err) {
+				console.error("Failed to load queue status:", err);
+			}
+		};
+		loadQueueStatus();
+
+		// Subscribe to queue status changes
+		const unsubStatus = window.forge.queue.onStatusChange((status) => {
+			setQueueStatus(status);
+			setIsGenerating(status.generating !== null);
+		});
+
+		// Subscribe to generation progress
+		const unsubProgress = window.forge.queue.onProgress(
+			(progressMsg: GenerationProgressMessage) => {
+				if (progressMsg.requestId === currentRequestId) {
+					setProgress(progressMsg.percent);
+				}
+			}
+		);
+
+		// Subscribe to generation complete
+		const unsubComplete = window.forge.queue.onComplete(
+			(data: GenerationCompleteMessage) => {
+				if (data.requestId === currentRequestId) {
+					console.log("Generation complete:", data.outputPath);
+					setCurrentRequestId(null);
+					setProgress(0);
+				}
+			}
+		);
+
+		// Subscribe to generation failed
+		const unsubFailed = window.forge.queue.onFailed(
+			(data: GenerationFailedMessage) => {
+				if (data.requestId === currentRequestId) {
+					console.error("Generation failed:", data.error);
+					setCurrentRequestId(null);
+					setProgress(0);
+				}
+			}
+		);
+
+		return () => {
+			unsubStatus();
+			unsubProgress();
+			unsubComplete();
+			unsubFailed();
+		};
+	}, [currentRequestId]);
+
 	const showRawPromptInput = !selectedTemplate;
 	const canGenerate = showRawPromptInput ? rawPrompt.trim() : selectedTemplate;
 
@@ -116,21 +190,15 @@ export const GenerationPanel = () => {
 	const handleGenerate = async () => {
 		if (!canGenerate || isGenerating) return;
 
-		setIsGenerating(true);
-		setProgress(0);
-
-		const cleanup = window.forge.generate.onProgress((p) => {
-			setProgress(p.percent);
-		});
-
 		try {
 			// Build final prompt: from template or raw prompt, combined with theme style
-			let basePrompt = selectedTemplate
+			const basePrompt = selectedTemplate
 				? buildPromptFromTemplate()
 				: rawPrompt.trim();
 			let finalPrompt = basePrompt;
 			if (currentTheme && currentTheme.stylePrompt) {
-				finalPrompt = `${basePrompt}, ${currentTheme.stylePrompt}`;
+				// Theme stylePrompt is prepended per design doc
+				finalPrompt = `${currentTheme.stylePrompt}, ${basePrompt}`;
 			}
 
 			// Use theme defaults if available, otherwise use hardcoded defaults
@@ -141,25 +209,55 @@ export const GenerationPanel = () => {
 			const cfgScale = currentTheme?.defaults.cfgScale || 7;
 			const negativePrompt = currentTheme?.negativePrompt || "";
 
-			const result = await window.forge.generate.image({
+			// Generate a unique request ID
+			const requestId = `gen-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+			// Build templateValues if using a template
+			const templateValues = selectedTemplate ? variableSelections : null;
+
+			// Get variable order from the template for consistent path generation
+			const variableOrder = currentTemplate
+				? currentTemplate.variables.map((v) => v.name)
+				: undefined;
+
+			// Use a random seed for now (null means the queue service will generate one)
+			const seed = Math.floor(Math.random() * 2147483647);
+			const timestamp = Date.now();
+
+			// Build output path via IPC
+			const outputPath = await window.forge.output.buildPath({
+				themeId: selectedTheme || null,
+				templateId: selectedTemplate || null,
+				templateValues,
+				variableOrder,
+				seed,
+				timestamp,
+			});
+
+			// Build the generation request
+			const request = {
+				id: requestId,
+				themeId: selectedTheme || null,
+				templateId: selectedTemplate || null,
+				templateValues,
 				prompt: finalPrompt,
-				negativePrompt: negativePrompt || undefined,
+				negativePrompt,
 				model,
-				outputPath: `/tmp/forgecraft-test-${Date.now()}.png`,
 				width,
 				height,
 				steps,
 				cfgScale,
-			});
+				seed,
+				outputPath,
+			};
 
-			if (!result.success) {
-				console.error("Generation failed:", result.error);
-			} else {
-				console.log("Generated:", result.outputPath);
-			}
-		} finally {
-			cleanup();
-			setIsGenerating(false);
+			// Add to queue
+			const result = await window.forge.queue.add(request);
+			setCurrentRequestId(result.id);
+			setProgress(0);
+			console.log("Added to queue:", result.id);
+		} catch (err) {
+			console.error("Failed to add to queue:", err);
 		}
 	};
 
@@ -306,7 +404,7 @@ export const GenerationPanel = () => {
 					<span className="queue-label">Queue</span>
 					{queueStatus.pending > 0 ? (
 						<span className="queue-count">{queueStatus.pending} pending</span>
-					) : queueStatus.generating ? (
+					) : queueStatus.generating !== null ? (
 						<span className="queue-count">Generating...</span>
 					) : (
 						<span className="queue-empty">No items in queue</span>

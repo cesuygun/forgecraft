@@ -34,6 +34,7 @@ import {
   createTemplate,
   updateTemplate,
   deleteTemplate,
+  buildOutputPath,
 } from "./data";
 import type {
   CreateThemeInput,
@@ -237,6 +238,28 @@ ipcMain.handle("queue:status", () => {
   }
   return queueService.getStatus();
 });
+
+// ============================================================================
+// Output Path IPC Handlers
+// ============================================================================
+
+interface BuildOutputPathInput {
+  themeId: string | null;
+  templateId: string | null;
+  templateValues: Record<string, string> | null;
+  variableOrder?: string[];
+  seed: number;
+  timestamp?: number;
+}
+
+ipcMain.handle(
+  "output:buildPath",
+  (_event: IpcMainInvokeEvent, options: unknown) => {
+    return buildOutputPath(
+      assertObject<BuildOutputPathInput>(options, "output path options"),
+    );
+  },
+);
 
 // ============================================================================
 // App lifecycle

@@ -60,6 +60,16 @@ export interface ForgeApi {
     update: (id: string, input: UpdateTemplateInput) => Promise<Template>;
     delete: (id: string) => Promise<boolean>;
   };
+  output: {
+    buildPath: (options: {
+      themeId: string | null;
+      templateId: string | null;
+      templateValues: Record<string, string> | null;
+      variableOrder?: string[];
+      seed: number;
+      timestamp?: number;
+    }) => Promise<string>;
+  };
   queue: {
     add: (request: GenerationRequest) => Promise<{ id: string }>;
     cancel: (id: string) => Promise<{ success: boolean }>;
