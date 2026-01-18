@@ -492,11 +492,11 @@ The right panel is always visible regardless of sidebar selection:
 - [x] Raw prompt generation (no template)
 - [x] Queue status display
 
-### Phase 4: Template System (Partially Complete)
+### Phase 4: Template System ✅
 - [x] Template creation UI (variables, options, pattern)
 - [x] Template variable dropdowns in generation panel
 - [x] Prompt composition (theme + template interpolation)
-- [ ] "Generate All" with combination counting
+- [x] "Generate All" with combination counting
 
 ### Phase 5: History & Polish
 - [ ] History browser with filters (by theme, template, date)

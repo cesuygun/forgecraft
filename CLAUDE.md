@@ -223,7 +223,7 @@ useEffect(() => {
 1. **Phase 1: Core Infrastructure** ✅ - SQLite, Theme/Template CRUD, output folders (119 tests)
 2. **Phase 2: Queue & Generation** ✅ - Queue processor, IPC progress, error recovery (179 tests)
 3. **Phase 3: Basic UI** ✅ - Workflow views, Theme/Template CRUD UI, queue status (179 tests)
-4. **Phase 4: Template System** - "Generate All" (variable dropdowns already done in Phase 3)
+4. **Phase 4: Template System** ✅ - "Generate All" with combination counting (195 tests)
 5. **Phase 5: History & Polish** - Filters, queue management, settings
 
 ### Deferred to V2
