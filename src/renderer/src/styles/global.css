@@ -470,6 +470,132 @@ select {
 /* History View */
 .history-view {
 	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+/* History Toolbar */
+.history-toolbar {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	margin-bottom: 20px;
+	gap: 16px;
+}
+
+.history-filters {
+	display: flex;
+	gap: 16px;
+}
+
+.filter-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.filter-field label {
+	font-size: 11px;
+	color: var(--text-secondary);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.filter-field select {
+	min-width: 160px;
+	padding: 8px 12px;
+}
+
+.history-count {
+	font-size: 13px;
+	color: var(--text-secondary);
+	padding-bottom: 8px;
+}
+
+/* History Grid */
+.history-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 16px;
+	flex: 1;
+	overflow-y: auto;
+}
+
+/* History Card */
+.history-card {
+	background: var(--bg-secondary);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	overflow: hidden;
+	transition: all 0.15s ease;
+}
+
+.history-card:hover {
+	border-color: var(--accent-primary);
+	box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.history-card-image {
+	aspect-ratio: 1;
+	background: var(--bg-tertiary);
+	overflow: hidden;
+}
+
+.history-card-image img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.history-card-info {
+	padding: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.history-prompt {
+	font-size: 12px;
+	color: var(--text-primary);
+	line-height: 1.4;
+	min-height: 34px;
+}
+
+.history-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.meta-tag {
+	font-size: 10px;
+	padding: 2px 6px;
+	border-radius: var(--radius-sm);
+	background: var(--bg-tertiary);
+}
+
+.meta-tag.theme-tag {
+	color: var(--accent-primary);
+}
+
+.meta-tag.template-tag {
+	color: var(--gold);
+}
+
+.history-details {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 11px;
+	color: var(--text-muted);
+}
+
+.history-date {
+	/* default styling */
+}
+
+.history-seed {
+	font-family: monospace;
 }
 
 /* Queue View */

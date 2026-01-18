@@ -22,7 +22,13 @@ import {
   downloadModel,
   SD_MODELS,
 } from "../shared/sd-models";
-import { initDatabase, closeDatabase } from "./db";
+import {
+  initDatabase,
+  closeDatabase,
+  listGenerations,
+  countGenerations,
+} from "./db";
+import type { ListGenerationsOptions } from "./db";
 import {
   listThemes,
   getTheme,
@@ -258,6 +264,33 @@ ipcMain.handle(
     return buildOutputPath(
       assertObject<BuildOutputPathInput>(options, "output path options"),
     );
+  },
+);
+
+// ============================================================================
+// History IPC Handlers
+// ============================================================================
+
+ipcMain.handle(
+  "history:list",
+  (_event: IpcMainInvokeEvent, options: unknown) => {
+    const opts = options
+      ? assertObject<ListGenerationsOptions>(options, "history list options")
+      : undefined;
+    return listGenerations(opts);
+  },
+);
+
+ipcMain.handle(
+  "history:count",
+  (_event: IpcMainInvokeEvent, options: unknown) => {
+    const opts = options
+      ? assertObject<{ themeId?: string; templateId?: string }>(
+          options,
+          "history count options",
+        )
+      : undefined;
+    return countGenerations(opts);
   },
 );
 

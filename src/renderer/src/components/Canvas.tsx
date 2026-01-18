@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { View } from "./Forge";
-import type { Theme, Template } from "@shared/types";
+import type { Theme, Template, GenerationRecord } from "@shared/types";
 import { ThemeForm } from "./ThemeForm";
 import { TemplateForm } from "./TemplateForm";
 
@@ -405,16 +405,195 @@ const TemplatesView = () => {
 };
 
 const HistoryView = () => {
+	const [generations, setGenerations] = useState<GenerationRecord[]>([]);
+	const [themes, setThemes] = useState<Theme[]>([]);
+	const [templates, setTemplates] = useState<Template[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [filterThemeId, setFilterThemeId] = useState<string>("");
+	const [filterTemplateId, setFilterTemplateId] = useState<string>("");
+
+	// Load themes and templates for filter dropdowns
+	const loadFilters = useCallback(async () => {
+		try {
+			const [themeList, templateList] = await Promise.all([
+				window.forge.themes.list(),
+				window.forge.templates.list(),
+			]);
+			setThemes(themeList);
+			setTemplates(templateList);
+		} catch (err) {
+			console.error("Failed to load filters:", err);
+		}
+	}, []);
+
+	// Load generations with current filters
+	const loadGenerations = useCallback(async () => {
+		try {
+			setError(null);
+			const options: { themeId?: string; templateId?: string } = {};
+			if (filterThemeId) options.themeId = filterThemeId;
+			if (filterTemplateId) options.templateId = filterTemplateId;
+
+			const list = await window.forge.history.list(options);
+			setGenerations(list);
+		} catch (err) {
+			setError(
+				err instanceof Error ? err.message : "Failed to load generations"
+			);
+		} finally {
+			setIsLoading(false);
+		}
+	}, [filterThemeId, filterTemplateId]);
+
+	useEffect(() => {
+		loadFilters();
+	}, [loadFilters]);
+
+	useEffect(() => {
+		loadGenerations();
+	}, [loadGenerations]);
+
+	const formatDate = (timestamp: number): string => {
+		const date = new Date(timestamp);
+		return date.toLocaleDateString(undefined, {
+			month: "short",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+	};
+
+	const truncatePrompt = (prompt: string, maxLength = 50): string => {
+		return prompt.length > maxLength
+			? `${prompt.substring(0, maxLength)}...`
+			: prompt;
+	};
+
+	const getThemeName = (themeId: string | null): string => {
+		if (!themeId) return "Raw Prompt";
+		const theme = themes.find((t) => t.id === themeId);
+		return theme?.name ?? themeId;
+	};
+
+	const getTemplateName = (templateId: string | null): string => {
+		if (!templateId) return "Raw Prompt";
+		const template = templates.find((t) => t.id === templateId);
+		return template?.name ?? templateId;
+	};
+
+	if (isLoading) {
+		return (
+			<div className="history-view">
+				<div className="loading-state">
+					<div className="loading-spinner" />
+					<p>Loading history...</p>
+				</div>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="history-view">
+				<div className="error-state">
+					<span className="icon">!</span>
+					<h3>Error Loading History</h3>
+					<p>{error}</p>
+					<button className="primary" onClick={loadGenerations}>
+						Retry
+					</button>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="history-view">
-			<div className="empty-state">
-				<span className="icon">H</span>
-				<h3>No Generations Yet</h3>
-				<p>
-					Your generated images will appear here. Use the Generation Panel on
-					the right to create your first asset.
-				</p>
+			<div className="history-toolbar">
+				<div className="history-filters">
+					<div className="filter-field">
+						<label htmlFor="filter-theme">Theme</label>
+						<select
+							id="filter-theme"
+							value={filterThemeId}
+							onChange={(e) => setFilterThemeId(e.target.value)}
+						>
+							<option value="">All Themes</option>
+							{themes.map((theme) => (
+								<option key={theme.id} value={theme.id}>
+									{theme.name}
+								</option>
+							))}
+						</select>
+					</div>
+
+					<div className="filter-field">
+						<label htmlFor="filter-template">Template</label>
+						<select
+							id="filter-template"
+							value={filterTemplateId}
+							onChange={(e) => setFilterTemplateId(e.target.value)}
+						>
+							<option value="">All Templates</option>
+							{templates.map((template) => (
+								<option key={template.id} value={template.id}>
+									{template.name}
+								</option>
+							))}
+						</select>
+					</div>
+				</div>
+
+				<span className="history-count">
+					{generations.length} generation{generations.length !== 1 ? "s" : ""}
+				</span>
 			</div>
+
+			{generations.length === 0 ? (
+				<div className="empty-state">
+					<span className="icon">H</span>
+					<h3>No Generations Yet</h3>
+					<p>
+						{filterThemeId || filterTemplateId
+							? "No generations match the current filters. Try adjusting your filter settings."
+							: "Your generated images will appear here. Use the Generation Panel on the right to create your first asset."}
+					</p>
+				</div>
+			) : (
+				<div className="history-grid">
+					{generations.map((gen) => (
+						<div key={gen.id} className="history-card">
+							<div className="history-card-image">
+								<img
+									src={`file://${gen.outputPath}`}
+									alt={gen.prompt}
+									loading="lazy"
+								/>
+							</div>
+							<div className="history-card-info">
+								<p className="history-prompt">{truncatePrompt(gen.prompt)}</p>
+								<div className="history-meta">
+									{gen.themeId && (
+										<span className="meta-tag theme-tag">
+											{getThemeName(gen.themeId)}
+										</span>
+									)}
+									{gen.templateId && (
+										<span className="meta-tag template-tag">
+											{getTemplateName(gen.templateId)}
+										</span>
+									)}
+								</div>
+								<div className="history-details">
+									<span className="history-date">{formatDate(gen.createdAt)}</span>
+									<span className="history-seed">Seed: {gen.seed}</span>
+								</div>
+							</div>
+						</div>
+					))}
+				</div>
+			)}
 		</div>
 	);
 };

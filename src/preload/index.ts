@@ -19,6 +19,7 @@ import type {
   CreateTemplateInput,
   UpdateTemplateInput,
   GenerationRequest,
+  GenerationRecord,
   QueueItem,
   QueueStatusMessage,
   GenerationProgressMessage,
@@ -26,6 +27,14 @@ import type {
   GenerationFailedMessage,
   QueueDiskFullMessage,
 } from "../shared/types";
+
+// History list options type
+export interface HistoryListOptions {
+  themeId?: string;
+  templateId?: string;
+  limit?: number;
+  offset?: number;
+}
 
 // Re-export for consumers
 export type {
@@ -42,6 +51,7 @@ export type {
   CreateTemplateInput,
   UpdateTemplateInput,
   GenerationRequest,
+  GenerationRecord,
   QueueItem,
   QueueStatusMessage,
   GenerationProgressMessage,
@@ -172,6 +182,16 @@ const forgeApi = {
       ipcRenderer.on("queue:diskFull", handler);
       return () => ipcRenderer.removeListener("queue:diskFull", handler);
     },
+  },
+
+  // History browser
+  history: {
+    list: (options?: HistoryListOptions): Promise<GenerationRecord[]> =>
+      ipcRenderer.invoke("history:list", options),
+    count: (options?: {
+      themeId?: string;
+      templateId?: string;
+    }): Promise<number> => ipcRenderer.invoke("history:count", options),
   },
 };
 

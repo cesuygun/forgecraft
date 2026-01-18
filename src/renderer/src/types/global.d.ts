@@ -16,6 +16,7 @@ import type {
   CreateTemplateInput,
   UpdateTemplateInput,
   GenerationRequest,
+  GenerationRecord,
   QueueItem,
   QueueStatusMessage,
   GenerationProgressMessage,
@@ -23,6 +24,14 @@ import type {
   GenerationFailedMessage,
   QueueDiskFullMessage,
 } from "@shared/types";
+
+// History list filter options
+export interface HistoryListOptions {
+  themeId?: string;
+  templateId?: string;
+  limit?: number;
+  offset?: number;
+}
 
 export interface ForgeApi {
   sd: {
@@ -87,6 +96,10 @@ export interface ForgeApi {
     ) => () => void;
     onFailed: (callback: (data: GenerationFailedMessage) => void) => () => void;
     onDiskFull: (callback: (data: QueueDiskFullMessage) => void) => () => void;
+  };
+  history: {
+    list: (options?: HistoryListOptions) => Promise<GenerationRecord[]>;
+    count: (options?: { themeId?: string; templateId?: string }) => Promise<number>;
   };
 }
 
