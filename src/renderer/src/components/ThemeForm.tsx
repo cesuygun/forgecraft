@@ -52,6 +52,16 @@ const DEFAULT_FORM_DATA: FormData = {
 	height: 512,
 };
 
+const toSlug = (text: string): string => {
+	return text
+		.toLowerCase()
+		.replace(/[^a-z0-9\s-]/g, "")
+		.replace(/\s+/g, "-")
+		.replace(/-+/g, "-")
+		.replace(/^-|-$/g, "")
+		.slice(0, 50);
+};
+
 export const ThemeForm = ({ theme, onSave, onCancel }: Props) => {
 	const isEditMode = theme !== null;
 	const [formData, setFormData] = useState<FormData>(DEFAULT_FORM_DATA);
@@ -59,6 +69,7 @@ export const ThemeForm = ({ theme, onSave, onCancel }: Props) => {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
 	const [models, setModels] = useState<SdModel[]>([]);
+	const [idManuallyEdited, setIdManuallyEdited] = useState(false);
 
 	// Load models on mount
 	useEffect(() => {
@@ -208,10 +219,21 @@ export const ThemeForm = ({ theme, onSave, onCancel }: Props) => {
 		field: keyof FormData,
 		value: string | number
 	) => {
-		setFormData((prev) => ({ ...prev, [field]: value }));
+		setFormData((prev) => {
+			const updated = { ...prev, [field]: value };
+			// Auto-generate ID from name (only in create mode, if ID hasn't been manually edited)
+			if (field === "name" && !isEditMode && !idManuallyEdited) {
+				updated.id = toSlug(value as string);
+			}
+			return updated;
+		});
 		// Clear error for this field when user starts typing
 		if (errors[field as keyof FormErrors]) {
 			setErrors((prev) => ({ ...prev, [field]: undefined }));
+		}
+		// Track manual ID edits
+		if (field === "id") {
+			setIdManuallyEdited(true);
 		}
 	};
 
