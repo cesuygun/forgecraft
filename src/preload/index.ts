@@ -157,6 +157,8 @@ const forgeApi = {
       ipcRenderer.invoke("queue:add", request),
     cancel: (id: string): Promise<{ success: boolean }> =>
       ipcRenderer.invoke("queue:cancel", id),
+    remove: (id: string): Promise<{ success: boolean }> =>
+      ipcRenderer.invoke("queue:remove", id),
     retry: (id: string): Promise<{ success: boolean }> =>
       ipcRenderer.invoke("queue:retry", id),
     list: (): Promise<QueueItem[]> => ipcRenderer.invoke("queue:list"),

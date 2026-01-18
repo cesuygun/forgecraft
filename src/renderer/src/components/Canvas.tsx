@@ -760,7 +760,7 @@ const QueueView = () => {
 
 	const handleRemove = async (id: string) => {
 		try {
-			await window.forge.queue.cancel(id);
+			await window.forge.queue.remove(id);
 			setQueueItems((prev) => prev.filter((item) => item.id !== id));
 		} catch (err) {
 			console.error("Failed to remove item:", err);

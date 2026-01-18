@@ -243,6 +243,13 @@ ipcMain.handle("queue:cancel", (_event: IpcMainInvokeEvent, id: unknown) => {
   return queueService.cancel(assertString(id, "queue item ID"));
 });
 
+ipcMain.handle("queue:remove", (_event: IpcMainInvokeEvent, id: unknown) => {
+  if (!queueService) {
+    throw new Error("Queue service not initialized");
+  }
+  return queueService.remove(assertString(id, "queue item ID"));
+});
+
 ipcMain.handle("queue:retry", (_event: IpcMainInvokeEvent, id: unknown) => {
   if (!queueService) {
     throw new Error("Queue service not initialized");

@@ -27,6 +27,7 @@ export interface QueueService {
   isRunning: () => boolean;
   add: (request: GenerationRequest) => { id: string };
   cancel: (id: string) => { success: boolean };
+  remove: (id: string) => { success: boolean };
   retry: (id: string) => { success: boolean };
   list: () => QueueItem[];
   getStatus: () => QueueStatusMessage;
@@ -106,6 +107,19 @@ export const createQueueService = (): QueueService => {
 
       // Can only cancel pending items
       if (!item || item.status !== "pending") {
+        return { success: false };
+      }
+
+      deleteQueueItem(id);
+      broadcastQueueStatus();
+      return { success: true };
+    },
+
+    remove: (id: string) => {
+      const item = getQueueItem(id);
+
+      // Can only remove failed or completed items (not pending or generating)
+      if (!item || (item.status !== "failed" && item.status !== "complete")) {
         return { success: false };
       }
 

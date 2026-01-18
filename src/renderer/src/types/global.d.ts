@@ -85,6 +85,7 @@ export interface ForgeApi {
   queue: {
     add: (request: GenerationRequest) => Promise<{ id: string }>;
     cancel: (id: string) => Promise<{ success: boolean }>;
+    remove: (id: string) => Promise<{ success: boolean }>;
     retry: (id: string) => Promise<{ success: boolean }>;
     list: () => Promise<QueueItem[]>;
     getStatus: () => Promise<QueueStatusMessage>;
