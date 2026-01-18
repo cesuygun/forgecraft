@@ -422,8 +422,14 @@ select {
 	min-width: 40px;
 }
 
-.generate-btn {
+.generate-buttons {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 	margin-top: auto;
+}
+
+.generate-btn {
 	padding: 14px;
 	font-size: 15px;
 	font-weight: 600;
@@ -454,4 +460,56 @@ select {
 /* Themes View */
 .themes-view {
 	height: 100%;
+}
+
+/* Templates View */
+.templates-view {
+	height: 100%;
+}
+
+/* History View */
+.history-view {
+	height: 100%;
+}
+
+/* Queue View */
+.queue-view {
+	height: 100%;
+}
+
+/* Panel Footer (Queue Status) */
+.panel-footer {
+	padding: 12px 16px;
+	border-top: 1px solid var(--border);
+	background: var(--bg-tertiary);
+}
+
+.queue-status {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.queue-label {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--text-secondary);
+}
+
+.queue-count {
+	font-size: 13px;
+	color: var(--text-primary);
+}
+
+.queue-empty {
+	font-size: 13px;
+	color: var(--text-muted);
+}
+
+/* Field note */
+.field-note {
+	font-size: 12px;
+	color: var(--text-muted);
+	line-height: 1.4;
 }

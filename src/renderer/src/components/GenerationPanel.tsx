@@ -1,17 +1,22 @@
 import { useState } from "react";
-import type { View } from "./Forge";
 
-interface Props {
-	view: View;
-}
-
-export const GenerationPanel = ({ view }: Props) => {
-	const [prompt, setPrompt] = useState("");
+export const GenerationPanel = () => {
+	const [selectedTheme, setSelectedTheme] = useState<string>("");
+	const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+	const [rawPrompt, setRawPrompt] = useState("");
 	const [isGenerating, setIsGenerating] = useState(false);
 	const [progress, setProgress] = useState(0);
 
+	// Placeholder data - will be populated from actual data in next task
+	const themes: { id: string; name: string }[] = [];
+	const templates: { id: string; name: string }[] = [];
+	const queueStatus = { pending: 0, generating: false };
+
+	const showRawPromptInput = !selectedTemplate;
+	const canGenerate = showRawPromptInput ? rawPrompt.trim() : selectedTemplate;
+
 	const handleGenerate = async () => {
-		if (!prompt.trim() || isGenerating) return;
+		if (!canGenerate || isGenerating) return;
 
 		setIsGenerating(true);
 		setProgress(0);
@@ -21,9 +26,10 @@ export const GenerationPanel = ({ view }: Props) => {
 		});
 
 		try {
+			const prompt = rawPrompt.trim();
 			const result = await window.forge.generate.image({
 				prompt,
-				model: "dreamshaper-xl", // Uses model ID, resolved to path in backend
+				model: "dreamshaper-xl",
 				outputPath: `/tmp/forgecraft-test-${Date.now()}.png`,
 				width: 512,
 				height: 512,
@@ -50,31 +56,56 @@ export const GenerationPanel = ({ view }: Props) => {
 
 			<div className="panel-content">
 				<div className="field">
-					<label>Prompt</label>
-					<textarea
-						value={prompt}
-						onChange={(e) => setPrompt(e.target.value)}
-						placeholder={getPlaceholder(view)}
-						rows={4}
-					/>
-				</div>
-
-				<div className="field">
-					<label>Style</label>
-					<select disabled>
-						<option>No theme selected</option>
+					<label>Theme</label>
+					<select
+						value={selectedTheme}
+						onChange={(e) => setSelectedTheme(e.target.value)}
+					>
+						<option value="">None</option>
+						{themes.map((theme) => (
+							<option key={theme.id} value={theme.id}>
+								{theme.name}
+							</option>
+						))}
 					</select>
 				</div>
 
 				<div className="field">
-					<label>Size</label>
-					<div className="size-options">
-						<button className="active">64×64</button>
-						<button>128×128</button>
-						<button>256×256</button>
-						<button>512×512</button>
-					</div>
+					<label>Template</label>
+					<select
+						value={selectedTemplate}
+						onChange={(e) => setSelectedTemplate(e.target.value)}
+					>
+						<option value="">None (Raw Prompt)</option>
+						{templates.map((template) => (
+							<option key={template.id} value={template.id}>
+								{template.name}
+							</option>
+						))}
+					</select>
 				</div>
+
+				{showRawPromptInput && (
+					<div className="field">
+						<label>Prompt</label>
+						<textarea
+							value={rawPrompt}
+							onChange={(e) => setRawPrompt(e.target.value)}
+							placeholder="Describe what you want to generate..."
+							rows={4}
+						/>
+					</div>
+				)}
+
+				{/* Dynamic variables will appear here when template is selected */}
+				{selectedTemplate && (
+					<div className="field">
+						<label>Variables</label>
+						<p className="field-note">
+							Template variables will appear here when templates are loaded.
+						</p>
+					</div>
+				)}
 
 				{isGenerating && (
 					<div className="generation-progress">
@@ -88,31 +119,35 @@ export const GenerationPanel = ({ view }: Props) => {
 					</div>
 				)}
 
-				<button
-					className="generate-btn primary"
-					onClick={handleGenerate}
-					disabled={!prompt.trim() || isGenerating}
-				>
-					{isGenerating ? "Generating..." : "Generate"}
-				</button>
+				<div className="generate-buttons">
+					<button
+						className="generate-btn primary"
+						onClick={handleGenerate}
+						disabled={!canGenerate || isGenerating}
+					>
+						{isGenerating ? "Generating..." : "Generate"}
+					</button>
+
+					{selectedTemplate && (
+						<button className="generate-btn" disabled>
+							Generate All
+						</button>
+					)}
+				</div>
+			</div>
+
+			<div className="panel-footer">
+				<div className="queue-status">
+					<span className="queue-label">Queue</span>
+					{queueStatus.pending > 0 ? (
+						<span className="queue-count">{queueStatus.pending} pending</span>
+					) : queueStatus.generating ? (
+						<span className="queue-count">Generating...</span>
+					) : (
+						<span className="queue-empty">No items in queue</span>
+					)}
+				</div>
 			</div>
 		</aside>
 	);
-};
-
-const getPlaceholder = (view: View): string => {
-	switch (view) {
-		case "themes":
-			return "Describe your art style: dark fantasy, pixel art, glowing effects...";
-		case "characters":
-			return "A warrior in heavy armor with a glowing sword, idle pose";
-		case "ui":
-			return "Ornate health bar frame with gold filigree and gem decorations";
-		case "items":
-			return "A legendary fire sword with orange glow and flame particles";
-		case "effects":
-			return "Magical explosion with purple and blue sparks";
-		default:
-			return "Describe what you want to generate...";
-	}
 };

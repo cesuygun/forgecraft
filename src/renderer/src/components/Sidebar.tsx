@@ -7,13 +7,17 @@ interface Props {
 
 const VIEWS: { id: View; label: string; icon: string }[] = [
 	{ id: "themes", label: "Themes", icon: "🎨" },
-	{ id: "characters", label: "Characters", icon: "🧙" },
-	{ id: "ui", label: "UI Elements", icon: "🖼️" },
-	{ id: "items", label: "Items", icon: "⚔️" },
-	{ id: "effects", label: "Effects", icon: "✨" },
+	{ id: "templates", label: "Templates", icon: "📋" },
+	{ id: "history", label: "History", icon: "🖼️" },
+	{ id: "queue", label: "Queue", icon: "📥" },
 ];
 
 export const Sidebar = ({ activeView, onViewChange }: Props) => {
+	const handleSettingsClick = () => {
+		// Settings panel will be implemented in Phase 5
+		console.log("Settings clicked - not yet implemented");
+	};
+
 	return (
 		<nav className="sidebar">
 			<div className="sidebar-header">
@@ -35,7 +39,7 @@ export const Sidebar = ({ activeView, onViewChange }: Props) => {
 			</div>
 
 			<div className="sidebar-footer">
-				<button className="nav-item">
+				<button className="nav-item" onClick={handleSettingsClick}>
 					<span className="icon">⚙️</span>
 					<span className="label">Settings</span>
 				</button>

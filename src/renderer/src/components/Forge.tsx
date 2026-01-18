@@ -3,18 +3,16 @@ import { Sidebar } from "./Sidebar";
 import { Canvas } from "./Canvas";
 import { GenerationPanel } from "./GenerationPanel";
 
-export type View = "themes" | "characters" | "ui" | "items" | "effects";
+export type View = "themes" | "templates" | "history" | "queue";
 
 export const Forge = () => {
-	const [activeView, setActiveView] = useState<View>("themes");
+	const [activeView, setActiveView] = useState<View>("history");
 
 	return (
 		<div className="forge-layout">
 			<Sidebar activeView={activeView} onViewChange={setActiveView} />
-			<main className="forge-main">
-				<Canvas view={activeView} />
-			</main>
-			<GenerationPanel view={activeView} />
+			<Canvas view={activeView} />
+			<GenerationPanel />
 		</div>
 	);
 };
