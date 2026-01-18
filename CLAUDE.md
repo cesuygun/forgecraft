@@ -94,7 +94,8 @@ src/
 
 - **Electron** + **Vite** + **React** + **TypeScript**
 - **sd-cpp** for native Stable Diffusion inference
-- **electron-store** for persistence (to be implemented)
+- **better-sqlite3** for queue and history (requires `@electron/rebuild`)
+- **JSON files** for themes and templates (portable, version-controllable)
 - Models: SDXL-based (DreamShaper XL, Pixel Art XL)
 
 ## Consistency Strategy
@@ -120,12 +121,23 @@ Both `tsconfig.json` and `electron.vite.config.ts` define matching aliases:
 - `@renderer/*` → `src/renderer/src/*`
 - `@shared/*` → `src/shared/*`
 
+### Data Storage (V1)
+
+```
+~/.forgecraft/
+├── themes/              # JSON files (portable)
+├── templates/           # JSON files (portable)
+├── models/              # SD models
+├── output/              # Generated images
+│   └── {theme}/{template}/{vars}/{seed}.png
+└── forgecraft.db        # SQLite (queue + history)
+```
+
 ### Model Management
 
 - Model IDs are used in code (e.g., `"dreamshaper-xl"`)
 - `resolveModelPath()` handles ID → filename → full path resolution
 - All models stored in `~/.forgecraft/models/`
-- Custom LoRAs (themes) stored in `~/.forgecraft/themes/`
 
 ### IPC Pattern
 
@@ -162,16 +174,22 @@ const result = await window.forge.channel.name(options);
 - [x] Path aliases aligned
 
 ### Remaining
-- [ ] No persistence layer (electron-store configured but unused)
-- [ ] Missing file dialogs for project management
+- [ ] Implement V1 workflow (see `docs/plans/2025-01-18-v1-workflow-design.md`)
 
-### Future Work
-- [ ] Template system for race/job/rarity combinations
+### V1 Implementation Phases
+
+1. **Phase 1: Core Infrastructure** - SQLite, Theme/Template CRUD, output folders
+2. **Phase 2: Queue & Generation** - Queue processor, IPC progress, error recovery
+3. **Phase 3: Basic UI** - Workflow views, raw prompt generation
+4. **Phase 4: Template System** - Variable dropdowns, "Generate All"
+5. **Phase 5: History & Polish** - Filters, queue management, settings
+
+### Deferred to V2
 - [ ] LoRA training pipeline
+- [ ] Reference images for themes
 - [ ] ControlNet pose editor
-- [ ] Batch generation queue (for matrix generation)
-- [ ] Binary checksum verification
-- [ ] Generation cancellation support
+- [ ] IP-Adapter for reference-based generation
+- [ ] Asset tagging and search
 
 ## Workflow Commands
 
