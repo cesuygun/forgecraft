@@ -206,8 +206,8 @@ export const generateImage = async (
 			const text = data.toString();
 			errorOutput += text;
 
-			// Parse progress: "step 12/25"
-			const progressMatch = text.match(/step\s+(\d+)\/(\d+)/i);
+			// Parse progress: "| 1/3 -" or "step 12/25"
+			const progressMatch = text.match(/\|\s*(\d+)\/(\d+)\s*-/) || text.match(/step\s+(\d+)\/(\d+)/i);
 			if (progressMatch && onProgress) {
 				const step = parseInt(progressMatch[1], 10);
 				const totalSteps = parseInt(progressMatch[2], 10);
