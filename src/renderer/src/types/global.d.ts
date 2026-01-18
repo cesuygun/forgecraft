@@ -8,6 +8,14 @@ import type {
 	GenerateImageResult,
 } from "@shared/sd-cpp";
 import type { SdModel, DownloadProgress } from "@shared/sd-models";
+import type {
+	Theme,
+	Template,
+	CreateThemeInput,
+	UpdateThemeInput,
+	CreateTemplateInput,
+	UpdateTemplateInput,
+} from "@shared/types";
 
 export interface ForgeApi {
 	sd: {
@@ -24,6 +32,20 @@ export interface ForgeApi {
 	generate: {
 		image: (options: GenerateImageOptions) => Promise<GenerateImageResult>;
 		onProgress: (callback: (progress: GenerationProgress) => void) => () => void;
+	};
+	themes: {
+		list: () => Promise<Theme[]>;
+		get: (id: string) => Promise<Theme | null>;
+		create: (input: CreateThemeInput) => Promise<Theme>;
+		update: (id: string, input: UpdateThemeInput) => Promise<Theme>;
+		delete: (id: string) => Promise<boolean>;
+	};
+	templates: {
+		list: () => Promise<Template[]>;
+		get: (id: string) => Promise<Template | null>;
+		create: (input: CreateTemplateInput) => Promise<Template>;
+		update: (id: string, input: UpdateTemplateInput) => Promise<Template>;
+		delete: (id: string) => Promise<boolean>;
 	};
 }
 

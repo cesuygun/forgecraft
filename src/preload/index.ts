@@ -11,6 +11,14 @@ import type {
 	GenerateImageResult,
 } from "../shared/sd-cpp";
 import type { SdModel, DownloadProgress } from "../shared/sd-models";
+import type {
+	Theme,
+	Template,
+	CreateThemeInput,
+	UpdateThemeInput,
+	CreateTemplateInput,
+	UpdateTemplateInput,
+} from "../shared/types";
 
 // Re-export for consumers
 export type {
@@ -20,6 +28,12 @@ export type {
 	GenerateImageResult,
 	SdModel,
 	DownloadProgress,
+	Theme,
+	Template,
+	CreateThemeInput,
+	UpdateThemeInput,
+	CreateTemplateInput,
+	UpdateTemplateInput,
 };
 
 // API exposed to renderer
@@ -61,6 +75,28 @@ const forgeApi = {
 			ipcRenderer.on("generate:progress", handler);
 			return () => ipcRenderer.removeListener("generate:progress", handler);
 		},
+	},
+
+	// Theme management
+	themes: {
+		list: (): Promise<Theme[]> => ipcRenderer.invoke("themes:list"),
+		get: (id: string): Promise<Theme | null> => ipcRenderer.invoke("themes:get", id),
+		create: (input: CreateThemeInput): Promise<Theme> =>
+			ipcRenderer.invoke("themes:create", input),
+		update: (id: string, input: UpdateThemeInput): Promise<Theme> =>
+			ipcRenderer.invoke("themes:update", id, input),
+		delete: (id: string): Promise<boolean> => ipcRenderer.invoke("themes:delete", id),
+	},
+
+	// Template management
+	templates: {
+		list: (): Promise<Template[]> => ipcRenderer.invoke("templates:list"),
+		get: (id: string): Promise<Template | null> => ipcRenderer.invoke("templates:get", id),
+		create: (input: CreateTemplateInput): Promise<Template> =>
+			ipcRenderer.invoke("templates:create", input),
+		update: (id: string, input: UpdateTemplateInput): Promise<Template> =>
+			ipcRenderer.invoke("templates:update", id, input),
+		delete: (id: string): Promise<boolean> => ipcRenderer.invoke("templates:delete", id),
 	},
 };
 
