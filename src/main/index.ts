@@ -166,20 +166,27 @@ ipcMain.handle("themes:list", () => listThemes());
 ipcMain.handle("themes:get", (_event: IpcMainInvokeEvent, id: unknown) =>
   getTheme(assertString(id, "theme ID")),
 );
-ipcMain.handle("themes:create", (_event: IpcMainInvokeEvent, input: unknown) =>
-  createTheme(assertObject<CreateThemeInput>(input, "theme input")),
-);
+ipcMain.handle("themes:create", async (_event: IpcMainInvokeEvent, input: unknown) => {
+  const result = createTheme(assertObject<CreateThemeInput>(input, "theme input"));
+  mainWindow?.webContents.send("themes:changed");
+  return result;
+});
 ipcMain.handle(
   "themes:update",
-  (_event: IpcMainInvokeEvent, id: unknown, input: unknown) =>
-    updateTheme(
+  async (_event: IpcMainInvokeEvent, id: unknown, input: unknown) => {
+    const result = updateTheme(
       assertString(id, "theme ID"),
       assertObject<UpdateThemeInput>(input, "theme input"),
-    ),
+    );
+    mainWindow?.webContents.send("themes:changed");
+    return result;
+  },
 );
-ipcMain.handle("themes:delete", (_event: IpcMainInvokeEvent, id: unknown) =>
-  deleteTheme(assertString(id, "theme ID")),
-);
+ipcMain.handle("themes:delete", async (_event: IpcMainInvokeEvent, id: unknown) => {
+  const result = deleteTheme(assertString(id, "theme ID"));
+  mainWindow?.webContents.send("themes:changed");
+  return result;
+});
 
 // ============================================================================
 // Template IPC Handlers
@@ -191,20 +198,28 @@ ipcMain.handle("templates:get", (_event: IpcMainInvokeEvent, id: unknown) =>
 );
 ipcMain.handle(
   "templates:create",
-  (_event: IpcMainInvokeEvent, input: unknown) =>
-    createTemplate(assertObject<CreateTemplateInput>(input, "template input")),
+  async (_event: IpcMainInvokeEvent, input: unknown) => {
+    const result = createTemplate(assertObject<CreateTemplateInput>(input, "template input"));
+    mainWindow?.webContents.send("templates:changed");
+    return result;
+  },
 );
 ipcMain.handle(
   "templates:update",
-  (_event: IpcMainInvokeEvent, id: unknown, input: unknown) =>
-    updateTemplate(
+  async (_event: IpcMainInvokeEvent, id: unknown, input: unknown) => {
+    const result = updateTemplate(
       assertString(id, "template ID"),
       assertObject<UpdateTemplateInput>(input, "template input"),
-    ),
+    );
+    mainWindow?.webContents.send("templates:changed");
+    return result;
+  },
 );
-ipcMain.handle("templates:delete", (_event: IpcMainInvokeEvent, id: unknown) =>
-  deleteTemplate(assertString(id, "template ID")),
-);
+ipcMain.handle("templates:delete", async (_event: IpcMainInvokeEvent, id: unknown) => {
+  const result = deleteTemplate(assertString(id, "template ID"));
+  mainWindow?.webContents.send("templates:changed");
+  return result;
+});
 
 // ============================================================================
 // Queue IPC Handlers

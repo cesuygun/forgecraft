@@ -114,6 +114,11 @@ const forgeApi = {
       ipcRenderer.invoke("themes:update", id, input),
     delete: (id: string): Promise<boolean> =>
       ipcRenderer.invoke("themes:delete", id),
+    onChange: (callback: () => void) => {
+      const handler = () => callback();
+      ipcRenderer.on("themes:changed", handler);
+      return () => ipcRenderer.removeListener("themes:changed", handler);
+    },
   },
 
   // Template management
@@ -127,6 +132,11 @@ const forgeApi = {
       ipcRenderer.invoke("templates:update", id, input),
     delete: (id: string): Promise<boolean> =>
       ipcRenderer.invoke("templates:delete", id),
+    onChange: (callback: () => void) => {
+      const handler = () => callback();
+      ipcRenderer.on("templates:changed", handler);
+      return () => ipcRenderer.removeListener("templates:changed", handler);
+    },
   },
 
   // Output path utilities

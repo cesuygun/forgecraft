@@ -58,7 +58,7 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 	// App settings for defaults
 	const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
 
-	// Load themes on mount
+	// Load themes on mount and subscribe to changes
 	useEffect(() => {
 		const loadThemes = async () => {
 			try {
@@ -69,9 +69,15 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 			}
 		};
 		loadThemes();
+
+		// Subscribe to theme changes
+		const unsubscribe = window.forge.themes.onChange(() => {
+			loadThemes();
+		});
+		return unsubscribe;
 	}, []);
 
-	// Load templates on mount
+	// Load templates on mount and subscribe to changes
 	useEffect(() => {
 		const loadTemplates = async () => {
 			try {
@@ -82,6 +88,12 @@ export const GenerationPanel = ({ onNavigateToQueue }: GenerationPanelProps) => 
 			}
 		};
 		loadTemplates();
+
+		// Subscribe to template changes
+		const unsubscribe = window.forge.templates.onChange(() => {
+			loadTemplates();
+		});
+		return unsubscribe;
 	}, []);
 
 	// Load app settings on mount

@@ -62,6 +62,7 @@ export interface ForgeApi {
     create: (input: CreateThemeInput) => Promise<Theme>;
     update: (id: string, input: UpdateThemeInput) => Promise<Theme>;
     delete: (id: string) => Promise<boolean>;
+    onChange: (callback: () => void) => () => void;
   };
   templates: {
     list: () => Promise<Template[]>;
@@ -69,6 +70,7 @@ export interface ForgeApi {
     create: (input: CreateTemplateInput) => Promise<Template>;
     update: (id: string, input: UpdateTemplateInput) => Promise<Template>;
     delete: (id: string) => Promise<boolean>;
+    onChange: (callback: () => void) => () => void;
   };
   output: {
     buildPath: (options: {
