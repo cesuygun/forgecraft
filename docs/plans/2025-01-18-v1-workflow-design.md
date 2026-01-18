@@ -449,19 +449,19 @@ The right panel is always visible regardless of sidebar selection:
 
 ## Implementation Phases
 
-### Phase 1: Core Infrastructure
-- [ ] Add `better-sqlite3` dependency + `@electron/rebuild`
-- [ ] Create database module (init, migrations)
-- [ ] Theme CRUD (load/save JSON files)
-- [ ] Template CRUD (load/save JSON files)
-- [ ] Output folder utilities
+### Phase 1: Core Infrastructure ✅
+- [x] Add `better-sqlite3` dependency + `@electron/rebuild`
+- [x] Create database module (init, migrations)
+- [x] Theme CRUD (load/save JSON files)
+- [x] Template CRUD (load/save JSON files)
+- [x] Output folder utilities
 
-### Phase 2: Queue & Generation
-- [ ] Generation queue processor (sequential)
-- [ ] Wire sd-cpp to queue processor
-- [ ] Progress reporting via IPC
-- [ ] Generation history recording
-- [ ] Error handling and recovery on startup
+### Phase 2: Queue & Generation ✅
+- [x] Generation queue processor (sequential)
+- [x] Wire sd-cpp to queue processor
+- [x] Progress reporting via IPC
+- [x] Generation history recording
+- [x] Error handling and recovery on startup
 
 **IPC Channels (Phase 2):**
 

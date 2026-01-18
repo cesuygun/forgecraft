@@ -153,6 +153,26 @@ channelName: (options: OptionType): Promise<ResultType> =>
 const result = await window.forge.channel.name(options);
 ```
 
+### Queue Architecture (Phase 2)
+
+Two-layer design for testability:
+
+1. **queue-processor.ts** - Core processing logic (no Electron deps)
+   - Polling loop with `setTimeout`
+   - Callbacks for status/progress/complete/failed/diskFull
+   - Testable in isolation with mocked `generateImage`
+
+2. **queue-service.ts** - IPC bridge (Electron-aware)
+   - Wraps processor with IPC broadcasting
+   - `BrowserWindow.getAllWindows()` for multi-window support
+   - Commands: add/cancel/retry/list/getStatus
+
+**Key patterns:**
+- `processing` flag prevents concurrent generation
+- Disk full detection (ENOSPC code + message matching)
+- Auto-pause on disk full, manual resume
+- Retry resets item to pending status
+
 ### Generation Parameters
 
 | Parameter | Default | Notes |
@@ -178,8 +198,8 @@ const result = await window.forge.channel.name(options);
 
 ### V1 Implementation Phases
 
-1. **Phase 1: Core Infrastructure** - SQLite, Theme/Template CRUD, output folders
-2. **Phase 2: Queue & Generation** - Queue processor, IPC progress, error recovery
+1. **Phase 1: Core Infrastructure** ✅ - SQLite, Theme/Template CRUD, output folders (119 tests)
+2. **Phase 2: Queue & Generation** ✅ - Queue processor, IPC progress, error recovery (179 tests)
 3. **Phase 3: Basic UI** - Workflow views, raw prompt generation
 4. **Phase 4: Template System** - Variable dropdowns, "Generate All"
 5. **Phase 5: History & Polish** - Filters, queue management, settings
