@@ -147,6 +147,10 @@ export interface GenerationFailedMessage {
 	error: string;
 }
 
+export interface QueueDiskFullMessage {
+	requestId: string;
+}
+
 // ============================================================================
 // VALIDATION
 // Validation constraints from design doc

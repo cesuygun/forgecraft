@@ -78,6 +78,10 @@ export const createQueueService = (): QueueService => {
       };
       broadcast<GenerationFailedMessage>("generation:failed", message);
     },
+
+    onDiskFull: (id: string) => {
+      broadcast<{ requestId: string }>("queue:diskFull", { requestId: id });
+    },
   });
 
   return {

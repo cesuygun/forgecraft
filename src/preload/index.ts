@@ -24,6 +24,7 @@ import type {
   GenerationProgressMessage,
   GenerationCompleteMessage,
   GenerationFailedMessage,
+  QueueDiskFullMessage,
 } from "../shared/types";
 
 // Re-export for consumers
@@ -46,6 +47,7 @@ export type {
   GenerationProgressMessage,
   GenerationCompleteMessage,
   GenerationFailedMessage,
+  QueueDiskFullMessage,
 };
 
 // API exposed to renderer
@@ -151,6 +153,12 @@ const forgeApi = {
         callback(data);
       ipcRenderer.on("generation:failed", handler);
       return () => ipcRenderer.removeListener("generation:failed", handler);
+    },
+    onDiskFull: (callback: (data: QueueDiskFullMessage) => void) => {
+      const handler = (_: unknown, data: QueueDiskFullMessage) =>
+        callback(data);
+      ipcRenderer.on("queue:diskFull", handler);
+      return () => ipcRenderer.removeListener("queue:diskFull", handler);
     },
   },
 };

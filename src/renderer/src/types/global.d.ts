@@ -21,6 +21,7 @@ import type {
   GenerationProgressMessage,
   GenerationCompleteMessage,
   GenerationFailedMessage,
+  QueueDiskFullMessage,
 } from "@shared/types";
 
 export interface ForgeApi {
@@ -75,6 +76,7 @@ export interface ForgeApi {
       callback: (data: GenerationCompleteMessage) => void,
     ) => () => void;
     onFailed: (callback: (data: GenerationFailedMessage) => void) => () => void;
+    onDiskFull: (callback: (data: QueueDiskFullMessage) => void) => () => void;
   };
 }
 

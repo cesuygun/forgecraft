@@ -553,4 +553,39 @@ describe("QueueService", () => {
       });
     });
   });
+
+  describe("disk full handling", () => {
+    it("should broadcast queue:diskFull when disk full error occurs", async () => {
+      const request = createRequest("disk-full-1");
+      service.add(request);
+
+      mockWebContentsSend.mockClear();
+
+      // Simulate disk full error
+      const diskFullError = new Error("ENOSPC: no space left on device");
+      (diskFullError as NodeJS.ErrnoException).code = "ENOSPC";
+      mockedGenerateImage.mockRejectedValueOnce(diskFullError);
+
+      service.start();
+
+      await vi.waitFor(
+        () => {
+          const item = getQueueItem("disk-full-1");
+          expect(item?.status).toBe("failed");
+        },
+        { timeout: 2000 },
+      );
+
+      service.stop();
+
+      // Should have sent queue:diskFull event
+      const diskFullCalls = mockWebContentsSend.mock.calls.filter(
+        (call) => call[0] === "queue:diskFull",
+      );
+      expect(diskFullCalls).toHaveLength(1);
+      expect(diskFullCalls[0][1]).toEqual({
+        requestId: "disk-full-1",
+      });
+    });
+  });
 });
