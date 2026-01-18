@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Models (large files)
+models/
+*.safetensors
+*.ckpt
+*.pt
+*.bin
+
+# Generated assets (user may want to keep these)
+# output/
+
+# ComfyUI
+comfyui/
+
+# Temporary
+tmp/
+.cache/
