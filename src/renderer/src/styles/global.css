@@ -1151,9 +1151,16 @@ button.danger:hover:not(:disabled) {
 
 .close-btn {
 	background: transparent;
-	padding: 4px 8px;
-	font-size: 20px;
+	padding: 12px 16px;
+	font-size: 24px;
 	line-height: 1;
+	cursor: pointer;
+	border-radius: var(--radius-sm);
+	transition: background-color 0.15s ease;
+}
+
+.close-btn:hover {
+	background: var(--bg-tertiary);
 }
 
 /* Theme Form */
