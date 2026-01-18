@@ -70,7 +70,11 @@ export const countCombinations = (axes: VariableAxis[]): number => {
 	}
 
 	return axes.reduce((total, axis) => {
-		const count = axis.selectAll ? axis.options.length : 1;
+		const count = axis.selectAll
+			? axis.options.length
+			: axis.selectedId
+				? 1
+				: 0;
 		return total * count;
 	}, 1);
 };

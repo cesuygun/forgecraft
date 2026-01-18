@@ -185,6 +185,50 @@ describe("Generate All utilities", () => {
 		});
 	});
 
+	describe("computeCombinations edge cases", () => {
+		it("returns empty array when selectAll=false and no selectedId", () => {
+			const axes: VariableAxis[] = [
+				{
+					name: "slot",
+					options: [
+						{ id: "boots", label: "Boots", promptFragment: "boots" },
+						{ id: "helmet", label: "Helmet", promptFragment: "helmet" },
+					],
+					selectAll: false,
+					// No selectedId - edge case
+				},
+			];
+
+			const result = computeCombinations(axes);
+
+			expect(result).toEqual([]);
+		});
+
+		it("returns empty array when any variable has no selected options", () => {
+			const axes: VariableAxis[] = [
+				{
+					name: "slot",
+					options: [
+						{ id: "boots", label: "Boots", promptFragment: "boots" },
+					],
+					selectAll: true,
+				},
+				{
+					name: "rarity",
+					options: [
+						{ id: "common", label: "Common", promptFragment: "common" },
+					],
+					selectAll: false,
+					// No selectedId - this makes the entire product 0
+				},
+			];
+
+			const result = computeCombinations(axes);
+
+			expect(result).toEqual([]);
+		});
+	});
+
 	describe("countCombinations", () => {
 		it("returns 1 when no variables", () => {
 			expect(countCombinations([])).toBe(1);
@@ -278,6 +322,44 @@ describe("Generate All utilities", () => {
 
 			// 5 slots x 1 rarity = 5 combinations
 			expect(countCombinations(axes)).toBe(5);
+		});
+
+		it("returns 0 when selectAll=false and no selectedId", () => {
+			const axes: VariableAxis[] = [
+				{
+					name: "slot",
+					options: [
+						{ id: "boots", label: "Boots", promptFragment: "boots" },
+						{ id: "helmet", label: "Helmet", promptFragment: "helmet" },
+					],
+					selectAll: false,
+					// No selectedId - edge case
+				},
+			];
+
+			expect(countCombinations(axes)).toBe(0);
+		});
+
+		it("returns 0 when any variable has no selected options", () => {
+			const axes: VariableAxis[] = [
+				{
+					name: "slot",
+					options: [
+						{ id: "boots", label: "Boots", promptFragment: "boots" },
+					],
+					selectAll: true,
+				},
+				{
+					name: "rarity",
+					options: [
+						{ id: "common", label: "Common", promptFragment: "common" },
+					],
+					selectAll: false,
+					// No selectedId - this makes the entire count 0
+				},
+			];
+
+			expect(countCombinations(axes)).toBe(0);
 		});
 	});
 });
