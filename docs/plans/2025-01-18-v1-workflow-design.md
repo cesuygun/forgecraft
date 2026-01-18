@@ -485,17 +485,17 @@ The right panel is always visible regardless of sidebar selection:
 'queue:list' → void → QueueItem[]
 ```
 
-### Phase 3: Basic UI
-- [ ] Replace bootstrap views with workflow views
-- [ ] Theme list view
-- [ ] Template list view
-- [ ] Raw prompt generation (no template)
-- [ ] Queue status display
+### Phase 3: Basic UI ✅
+- [x] Replace bootstrap views with workflow views
+- [x] Theme list view
+- [x] Template list view
+- [x] Raw prompt generation (no template)
+- [x] Queue status display
 
-### Phase 4: Template System
-- [ ] Template creation UI (variables, options, pattern)
-- [ ] Template variable dropdowns in generation panel
-- [ ] Prompt composition (theme + template interpolation)
+### Phase 4: Template System (Partially Complete)
+- [x] Template creation UI (variables, options, pattern)
+- [x] Template variable dropdowns in generation panel
+- [x] Prompt composition (theme + template interpolation)
 - [ ] "Generate All" with combination counting
 
 ### Phase 5: History & Polish

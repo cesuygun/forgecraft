@@ -173,6 +173,28 @@ Two-layer design for testability:
 - Auto-pause on disk full, manual resume
 - Retry resets item to pending status
 
+### React Component Patterns (Phase 3)
+
+**View Components (Canvas.tsx):**
+- Each view (ThemesView, TemplatesView, etc.) is a local component
+- Pattern: `useState` for list + `useCallback` for load function + `useEffect` to trigger
+- CRUD operations update local state optimistically after API success
+
+**Form Components (ThemeForm, TemplateForm):**
+- Modal pattern with `onSave` and `onCancel` callbacks
+- Single component handles both create (no initial data) and edit (pre-populated)
+- Validation uses shared `VALIDATION` constants from `@shared/types`
+- Field-level error display with `errors` state object
+
+**Event Subscriptions (GenerationPanel):**
+```typescript
+useEffect(() => {
+  const unsub1 = window.forge.queue.onStatusChange(...);
+  const unsub2 = window.forge.queue.onProgress(...);
+  return () => { unsub1(); unsub2(); }; // Cleanup
+}, [deps]);
+```
+
 ### Generation Parameters
 
 | Parameter | Default | Notes |
@@ -200,8 +222,8 @@ Two-layer design for testability:
 
 1. **Phase 1: Core Infrastructure** ✅ - SQLite, Theme/Template CRUD, output folders (119 tests)
 2. **Phase 2: Queue & Generation** ✅ - Queue processor, IPC progress, error recovery (179 tests)
-3. **Phase 3: Basic UI** - Workflow views, raw prompt generation
-4. **Phase 4: Template System** - Variable dropdowns, "Generate All"
+3. **Phase 3: Basic UI** ✅ - Workflow views, Theme/Template CRUD UI, queue status (179 tests)
+4. **Phase 4: Template System** - "Generate All" (variable dropdowns already done in Phase 3)
 5. **Phase 5: History & Polish** - Filters, queue management, settings
 
 ### Deferred to V2
