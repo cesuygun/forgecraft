@@ -93,7 +93,7 @@ export const ImagePreview = ({ record, themes, templates, onClose }: Props) => {
 				<div className="image-preview-content">
 					<div className="image-preview-image-container">
 						<img
-							src={`file://${record.outputPath}`}
+							src={`forge-file://${record.outputPath}`}
 							alt={record.prompt}
 							className="image-preview-image"
 							data-testid="image-preview-image"
