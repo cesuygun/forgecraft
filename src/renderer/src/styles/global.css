@@ -815,6 +815,11 @@ select {
 	/* default styling */
 }
 
+.queue-item-duration {
+	color: var(--accent-primary);
+	font-weight: 500;
+}
+
 .queue-item-model {
 	color: var(--text-secondary);
 }

@@ -747,6 +747,27 @@ const QueueView = () => {
 		});
 	};
 
+	const formatDuration = (item: QueueItem): string | null => {
+		if (!item.startedAt) return null;
+		const endTime = item.completedAt ?? Date.now();
+		const durationMs = endTime - item.startedAt;
+		const seconds = Math.floor(durationMs / 1000);
+		if (seconds < 60) return `${seconds}s`;
+		const minutes = Math.floor(seconds / 60);
+		const remainingSeconds = seconds % 60;
+		return `${minutes}m ${remainingSeconds}s`;
+	};
+
+	const handleRemove = async (id: string) => {
+		try {
+			await window.forge.queue.cancel(id);
+			setQueueItems((prev) => prev.filter((item) => item.id !== id));
+		} catch (err) {
+			console.error("Failed to remove item:", err);
+			loadQueue();
+		}
+	};
+
 	const truncatePrompt = (prompt: string, maxLength = 60): string => {
 		return prompt.length > maxLength
 			? `${prompt.substring(0, maxLength)}...`
@@ -938,6 +959,11 @@ const QueueView = () => {
 										Started: {formatTime(item.startedAt)}
 									</span>
 								)}
+								{(item.status === "complete" || item.status === "failed") && formatDuration(item) && (
+									<span className="queue-item-duration">
+										{formatDuration(item)}
+									</span>
+								)}
 								<span className="queue-item-model">{item.request.model}</span>
 								<span className="queue-item-size">
 									{item.request.width}x{item.request.height}
@@ -956,12 +982,30 @@ const QueueView = () => {
 								</button>
 							)}
 							{item.status === "failed" && (
+								<>
+									<button
+										className="primary queue-action-btn"
+										onClick={() => handleRetry(item.id)}
+										title="Retry"
+									>
+										Retry
+									</button>
+									<button
+										className="danger queue-action-btn"
+										onClick={() => handleRemove(item.id)}
+										title="Remove"
+									>
+										Remove
+									</button>
+								</>
+							)}
+							{item.status === "complete" && (
 								<button
-									className="primary queue-action-btn"
-									onClick={() => handleRetry(item.id)}
-									title="Retry"
+									className="queue-action-btn"
+									onClick={() => handleRemove(item.id)}
+									title="Remove from queue"
 								>
-									Retry
+									Remove
 								</button>
 							)}
 						</div>
