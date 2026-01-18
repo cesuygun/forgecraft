@@ -12,12 +12,12 @@ import { resolveModelPath } from "./sd-models";
 
 const FORGECRAFT_DIR = path.join(homedir(), ".forgecraft");
 const SD_CPP_DIR = path.join(FORGECRAFT_DIR, "services", "sd-cpp");
-const SD_CPP_BIN = path.join(SD_CPP_DIR, "bin", "sd");
+const SD_CPP_BIN = path.join(SD_CPP_DIR, "bin", "sd-cli");
 
-// GitHub release URL for precompiled sd-cpp binary (reusing Vespyr's build)
+// GitHub release URL for precompiled sd-cpp binary
 export const SD_CPP_DOWNLOAD_URL =
-	"https://github.com/cesuygun/vespyr/releases/download/sd-cpp-v1/sd-darwin-arm64.tar.gz";
-export const SD_CPP_BINARY_SIZE = 52_000_000;
+	"https://github.com/cesuygun/forgecraft/releases/download/sd-cpp-v1/sd-darwin-arm64.tar.gz";
+export const SD_CPP_BINARY_SIZE = 9_500_000;
 
 export const getForgeDir = (): string => FORGECRAFT_DIR;
 

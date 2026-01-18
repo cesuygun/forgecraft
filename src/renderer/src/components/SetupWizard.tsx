@@ -6,6 +6,72 @@ interface Props {
 	onComplete: () => void;
 }
 
+// Anvil/forge icon as SVG
+const ForgeIcon = ({ size = 64 }: { size?: number }) => (
+	<svg
+		width={size}
+		height={size}
+		viewBox="0 0 24 24"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+	>
+		{/* Anvil base */}
+		<path
+			d="M4 18h16v2H4v-2z"
+			fill="currentColor"
+			opacity="0.8"
+		/>
+		{/* Anvil body */}
+		<path
+			d="M6 14h12l1 4H5l1-4z"
+			fill="currentColor"
+			opacity="0.9"
+		/>
+		{/* Anvil top */}
+		<path
+			d="M3 12h18v2H3v-2z"
+			fill="currentColor"
+		/>
+		{/* Hammer handle */}
+		<path
+			d="M12 4l6 6-1.5 1.5L12 7l-4.5 4.5L6 10l6-6z"
+			fill="var(--accent-primary)"
+		/>
+		{/* Hammer head */}
+		<path
+			d="M16 8l2-2 2 2-2 2-2-2z"
+			fill="var(--accent-primary)"
+		/>
+		{/* Sparks */}
+		<circle cx="8" cy="10" r="1" fill="var(--gold)" opacity="0.8" />
+		<circle cx="10" cy="8" r="0.7" fill="var(--gold)" opacity="0.6" />
+		<circle cx="6" cy="8" r="0.5" fill="var(--gold)" opacity="0.4" />
+	</svg>
+);
+
+// Sparkle/ready icon
+const ReadyIcon = ({ size = 64 }: { size?: number }) => (
+	<svg
+		width={size}
+		height={size}
+		viewBox="0 0 24 24"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+	>
+		{/* Main star */}
+		<path
+			d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z"
+			fill="var(--accent-primary)"
+		/>
+		{/* Inner glow */}
+		<path
+			d="M12 6l1.2 3.7h3.9l-3.1 2.3 1.2 3.7-3.2-2.3-3.2 2.3 1.2-3.7-3.1-2.3h3.9L12 6z"
+			fill="var(--gold)"
+			opacity="0.6"
+		/>
+	</svg>
+);
+
 export const SetupWizard = ({ onComplete }: Props) => {
 	const [step, setStep] = useState<SetupStep>("welcome");
 	const [progress, setProgress] = useState(0);
@@ -97,16 +163,18 @@ export const SetupWizard = ({ onComplete }: Props) => {
 			<div className="setup-content">
 				{step === "welcome" && (
 					<>
-						<div className="logo">⚒️</div>
+						<div className="setup-icon">
+							<ForgeIcon size={72} />
+						</div>
 						<h1>Welcome to Forgecraft</h1>
-						<p>
+						<p className="setup-description">
 							Forge consistent game sprites, UI elements, and assets using local
 							AI. No internet required after setup.
 						</p>
 						<button className="primary" onClick={installBinary}>
 							Begin Setup
 						</button>
-						<p className="note">
+						<p className="setup-note">
 							This will download ~7GB of AI models. Make sure you have enough
 							space.
 						</p>
@@ -129,9 +197,11 @@ export const SetupWizard = ({ onComplete }: Props) => {
 
 				{step === "complete" && (
 					<>
-						<div className="logo">✨</div>
+						<div className="setup-icon">
+							<ReadyIcon size={72} />
+						</div>
 						<h1>Ready to Forge</h1>
-						<p>
+						<p className="setup-description">
 							Everything is set up. Time to create some amazing game assets!
 						</p>
 						<button className="primary" onClick={onComplete}>
